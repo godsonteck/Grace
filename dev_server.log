@@ -1,0 +1,19 @@
+
+> tmp-app@0.1.0 dev
+> next dev
+
+▲ Next.js 16.2.5 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.2:3000
+✓ Ready in 527ms
+
+ GET / 200 in 815ms (next.js: 294ms, application-code: 521ms)
+ GET / 200 in 226ms (next.js: 6ms, application-code: 220ms)
+[browser] Image with src "https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&q=80&w=800" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes
+[browser] Image with src "https://images.unsplash.com/photo-1530026405186-ed1f139313f8?auto=format&fit=crop&q=80&w=800" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes
+⨯ upstream image response failed for https://images.unsplash.com/photo-1579152276507-dc0d674b86b4?auto=format&fit=crop&q=80&w=800 404
+[browser] Image with src "https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&q=80&w=1000" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes
+ GET /scans 200 in 923ms (next.js: 885ms, application-code: 38ms)
+ GET /branches 200 in 601ms (next.js: 528ms, application-code: 73ms)
+ GET /admin 200 in 579ms (next.js: 536ms, application-code: 44ms)
+✓ Compiled in 216ms
