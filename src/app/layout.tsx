@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { DataProvider } from "@/context/DataContext";
+import { AuthProvider } from "@/context/AuthContext";
 import ConditionalLayout from "@/components/ConditionalLayout";
 
 export const metadata: Metadata = {
@@ -16,11 +17,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased min-h-screen flex flex-col">
-        <DataProvider>
-          <ConditionalLayout>
-            {children}
-          </ConditionalLayout>
-        </DataProvider>
+        <AuthProvider>
+          <DataProvider>
+            <ConditionalLayout>
+              {children}
+            </ConditionalLayout>
+          </DataProvider>
+        </AuthProvider>
       </body>
     </html>
   );
