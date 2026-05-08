@@ -18,9 +18,9 @@ export interface BodyPart {
   name: string;
   scanTypeId: string;
   category: string;
-  price?: number;
-  duration?: string;
-  preparation?: string;
+  price: number;
+  duration: string;
+  preparation: string;
 }
 
 export interface Patient {
@@ -29,6 +29,17 @@ export interface Patient {
   email: string;
   phone: string;
   dob: string;
+  gender: string;
+  bloodGroup?: string;
+  history?: PatientHistory[];
+}
+
+export interface PatientHistory {
+  id: string;
+  date: string;
+  procedure: string;
+  reportSummary: string;
+  doctor: string;
 }
 
 export interface Appointment {
@@ -42,6 +53,7 @@ export interface Appointment {
   time: string;
   status: "pending" | "confirmed" | "completed" | "cancelled";
   notes?: string;
+  reportAttached?: boolean;
 }
 
 export interface Invoice {
@@ -54,35 +66,38 @@ export interface Invoice {
   branchName: string;
 }
 
+export interface Staff {
+  id: string;
+  name: string;
+  role: "Doctor" | "Radiologist" | "Nurse" | "Receptionist" | "Admin";
+  branchId: string;
+  phone: string;
+  email: string;
+  status: "active" | "on-leave";
+}
+
+export interface Equipment {
+  id: string;
+  name: string;
+  type: string;
+  branchId: string;
+  lastMaintenance: string;
+  status: "operational" | "maintenance-required" | "faulty";
+}
+
+export interface AuditLog {
+  id: string;
+  user: string;
+  action: string;
+  timestamp: string;
+  module: string;
+}
+
 export const branches: Branch[] = [
-  {
-    id: "ho-branch",
-    name: "Grace Diagnostic Center - Ho",
-    address: "Ho Medical Road, Volta Region",
-    phone: "+233 24 000 1111",
-    email: "ho@gracediagnostic.com",
-  },
-  {
-    id: "achimota-branch",
-    name: "Grace Diagnostic Center - Achimota",
-    address: "Achimota Retail Centre Plaza, Accra",
-    phone: "+233 24 000 2222",
-    email: "achimota@gracediagnostic.com",
-  },
-  {
-    id: "koforidua-branch",
-    name: "Grace Diagnostic Center - Koforidua",
-    address: "Koforidua High St, Eastern Region",
-    phone: "+233 24 000 3333",
-    email: "koforidua@gracediagnostic.com",
-  },
-  {
-    id: "tema-branch",
-    name: "Grace Diagnostic Center - Tema",
-    address: "Tema Community 1, Harbour City",
-    phone: "+233 24 000 4444",
-    email: "tema@gracediagnostic.com",
-  },
+  { id: "ho-branch", name: "Grace Diagnostic Center - Ho", address: "Ho Medical Road, Volta Region", phone: "+233 24 000 1111", email: "ho@gracediagnostic.com" },
+  { id: "achimota-branch", name: "Grace Diagnostic Center - Achimota", address: "Achimota Retail Centre Plaza, Accra", phone: "+233 24 000 2222", email: "achimota@gracediagnostic.com" },
+  { id: "koforidua-branch", name: "Grace Diagnostic Center - Koforidua", address: "Koforidua High St, Eastern Region", phone: "+233 24 000 3333", email: "koforidua@gracediagnostic.com" },
+  { id: "tema-branch", name: "Grace Diagnostic Center - Tema", address: "Tema Community 1, Harbour City", phone: "+233 24 000 4444", email: "tema@gracediagnostic.com" },
 ];
 
 export const scanTypes: ScanType[] = [
@@ -107,53 +122,20 @@ export const scanTypes: ScanType[] = [
 ];
 
 export const bodyParts: BodyPart[] = [
-  // CT Scans
-  {
-    id: "ct-brain",
-    name: "Brain",
-    scanTypeId: "ct-scan",
-    category: "Head & Neck",
-    price: 250,
-    duration: "15-20 mins",
-    preparation: "Usually no special preparation required. Remove metal objects."
-  },
-  {
-    id: "ct-neck",
-    name: "Neck",
-    scanTypeId: "ct-scan",
-    category: "Head & Neck",
-    price: 230,
-    duration: "15 mins",
-    preparation: "No food or drink 4 hours before the scan if contrast is used."
-  },
-  { id: "ct-sinus", name: "Sinus", scanTypeId: "ct-scan", category: "Head & Neck", price: 210, duration: "10 mins", preparation: "No preparation needed." },
+  { id: "ct-brain", name: "Brain", scanTypeId: "ct-scan", category: "Head & Neck", price: 250, duration: "15-20 mins", preparation: "Usually no special preparation required. Remove metal objects." },
   { id: "ct-chest", name: "Chest", scanTypeId: "ct-scan", category: "Torso", price: 280, duration: "20 mins", preparation: "Breathe normally. Remove jewelry." },
-  { id: "ct-abdomen", name: "Abdomen", scanTypeId: "ct-scan", category: "Torso", price: 300, duration: "30 mins", preparation: "Fasting may be required for 6 hours." },
-  { id: "ct-pelvis", name: "Pelvis", scanTypeId: "ct-scan", category: "Torso", price: 280, duration: "30 mins", preparation: "Full bladder may be required." },
-  { id: "ct-spine-cervical", name: "Spine (Cervical)", scanTypeId: "ct-scan", category: "Spine", price: 260, duration: "20 mins", preparation: "Remove neck jewelry." },
-  { id: "ct-spine-thoracic", name: "Spine (Thoracic)", scanTypeId: "ct-scan", category: "Spine", price: 260, duration: "20 mins", preparation: "No preparation needed." },
-  { id: "ct-spine-lumbar", name: "Spine (Lumbar)", scanTypeId: "ct-scan", category: "Spine", price: 260, duration: "20 mins", preparation: "No preparation needed." },
-
-  // X-Rays
   { id: "xr-chest", name: "Chest PA/Lateral", scanTypeId: "xray-scan", category: "Torso", price: 80, duration: "5-10 mins", preparation: "Wear loose clothing." },
-  { id: "xr-skull", name: "Skull", scanTypeId: "xray-scan", category: "Head & Neck", price: 70, duration: "10 mins", preparation: "Remove hair clips/glasses." },
-  { id: "xr-hand", name: "Hand", scanTypeId: "xray-scan", category: "Extremities", price: 60, duration: "5 mins", preparation: "Remove rings." },
-  { id: "xr-wrist", name: "Wrist", scanTypeId: "xray-scan", category: "Extremities", price: 60, duration: "5 mins", preparation: "No preparation needed." },
-  { id: "xr-arm", name: "Forearm/Arm", scanTypeId: "xray-scan", category: "Extremities", price: 65, duration: "5 mins", preparation: "No preparation needed." },
-  { id: "xr-shoulder", name: "Shoulder", scanTypeId: "xray-scan", category: "Extremities", price: 75, duration: "10 mins", preparation: "No preparation needed." },
-  { id: "xr-leg", name: "Leg/Femur", scanTypeId: "xray-scan", category: "Extremities", price: 85, duration: "10 mins", preparation: "No preparation needed." },
-  { id: "xr-knee", name: "Knee", scanTypeId: "xray-scan", category: "Extremities", price: 70, duration: "5 mins", preparation: "No preparation needed." },
-  { id: "xr-ankle", name: "Ankle", scanTypeId: "xray-scan", category: "Extremities", price: 65, duration: "5 mins", preparation: "No preparation needed." },
-  { id: "xr-foot", name: "Foot", scanTypeId: "xray-scan", category: "Extremities", price: 60, duration: "5 mins", preparation: "No preparation needed." },
-  { id: "xr-spine-cervical", name: "Spine (Cervical)", scanTypeId: "xray-scan", category: "Spine", price: 90, duration: "15 mins", preparation: "No preparation needed." },
-  { id: "xr-spine-lumbar", name: "Spine (Lumbar)", scanTypeId: "xray-scan", category: "Spine", price: 90, duration: "15 mins", preparation: "No preparation needed." },
+  { id: "us-abdomen", name: "Whole Abdomen", scanTypeId: "ultrasound-scan", category: "Torso", price: 120, duration: "20-30 mins", preparation: "Fasting for 8 hours." },
+];
 
-  // Ultrasound
-  { id: "us-abdomen", name: "Whole Abdomen", scanTypeId: "ultrasound-scan", category: "Torso", price: 120, duration: "20-30 mins", preparation: "Fasting for 8 hours. No fatty foods." },
-  { id: "us-pelvis", name: "Pelvis (OB/GYN)", scanTypeId: "ultrasound-scan", category: "Torso", price: 110, duration: "20 mins", preparation: "Full bladder required. Drink 1L water 1 hour before." },
-  { id: "us-breast", name: "Breast", scanTypeId: "ultrasound-scan", category: "Soft Tissue", price: 100, duration: "20 mins", preparation: "No deodorant or powder on breasts." },
-  { id: "us-thyroid", name: "Thyroid", scanTypeId: "ultrasound-scan", category: "Soft Tissue", price: 90, duration: "15 mins", preparation: "No preparation needed." },
-  { id: "us-scrotum", name: "Scrotum", scanTypeId: "ultrasound-scan", category: "Soft Tissue", price: 95, duration: "15 mins", preparation: "No preparation needed." },
-  { id: "us-carotid", name: "Carotid Doppler", scanTypeId: "ultrasound-scan", category: "Vascular", price: 150, duration: "30 mins", preparation: "No preparation needed." },
-  { id: "us-venous-doppler", name: "Venous Doppler (Legs)", scanTypeId: "ultrasound-scan", category: "Vascular", price: 140, duration: "45 mins", preparation: "No preparation needed." },
+export const initialStaff: Staff[] = [
+  { id: "st-1", name: "Dr. Samuel Mensah", role: "Radiologist", branchId: "achimota-branch", phone: "+233 20 111 2222", email: "samuel@gracediagnostic.com", status: "active" },
+  { id: "st-2", name: "Nurse Linda Osei", role: "Nurse", branchId: "ho-branch", phone: "+233 20 333 4444", email: "linda@gracediagnostic.com", status: "active" },
+  { id: "st-3", name: "Kofi Appiah", role: "Receptionist", branchId: "koforidua-branch", phone: "+233 20 555 6666", email: "kofi@gracediagnostic.com", status: "active" },
+];
+
+export const initialEquipment: Equipment[] = [
+  { id: "eq-1", name: "Siemens Somatom Go.Up", type: "CT Scanner", branchId: "achimota-branch", lastMaintenance: "2024-10-15", status: "operational" },
+  { id: "eq-2", name: "GE Logiq E10", type: "Ultrasound", branchId: "ho-branch", lastMaintenance: "2024-11-01", status: "operational" },
+  { id: "eq-3", name: "Philips Digital Diagnost", type: "X-Ray", branchId: "tema-branch", lastMaintenance: "2024-09-20", status: "maintenance-required" },
 ];

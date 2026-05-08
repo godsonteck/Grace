@@ -1,21 +1,34 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { BodyPart, Appointment, Invoice, bodyParts as initialBodyParts } from '@/lib/data';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import {
+  BodyPart, Appointment, Invoice, Staff, Equipment, AuditLog, Patient,
+  bodyParts as initialBodyParts, initialStaff, initialEquipment
+} from '@/lib/data';
 
 interface DataContextType {
   records: BodyPart[];
   appointments: Appointment[];
   invoices: Invoice[];
+  staff: Staff[];
+  equipment: Equipment[];
+  auditLogs: AuditLog[];
+  patients: Patient[];
   isOnline: boolean;
   isSyncing: boolean;
+
+  // Actions
   addRecord: (record: BodyPart) => void;
   updateRecord: (record: BodyPart) => void;
   deleteRecord: (id: string) => void;
   addAppointment: (apt: any) => void;
   updateAppointment: (id: string, status: string) => void;
+  attachReport: (id: string) => void;
   addInvoice: (inv: Invoice) => void;
   payInvoice: (id: string) => void;
+  addStaff: (member: Staff) => void;
+  updateStaff: (member: Staff) => void;
+  updateEquipment: (item: Equipment) => void;
   syncData: () => Promise<void>;
 }
 
@@ -25,26 +38,33 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const [records, setRecords] = useState<BodyPart[]>(initialBodyParts);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [staff, setStaff] = useState<Staff[]>(initialStaff);
+  const [equipment, setEquipment] = useState<Equipment[]>(initialEquipment);
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [patients, setPatients] = useState<Patient[]>([]);
+
   const [isOnline, setIsOnline] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncQueue, setSyncQueue] = useState<any[]>([]);
 
-  // Initialize data
+  // Initialize data from localStorage
   useEffect(() => {
-    const savedRecords = localStorage.getItem('grace_records');
-    const savedApts = localStorage.getItem('grace_appointments');
-    const savedInvoices = localStorage.getItem('grace_invoices');
-    const savedQueue = localStorage.getItem('grace_sync_queue');
+    const load = (key: string, def: any) => {
+      const val = localStorage.getItem(key);
+      return val ? JSON.parse(val) : def;
+    };
 
-    if (savedRecords) setRecords(JSON.parse(savedRecords));
-    if (savedApts) setAppointments(JSON.parse(savedApts));
-    if (savedInvoices) setInvoices(JSON.parse(savedInvoices));
-    if (savedQueue) setSyncQueue(JSON.parse(savedQueue));
+    setRecords(load('grace_records', initialBodyParts));
+    setAppointments(load('grace_appointments', []));
+    setInvoices(load('grace_invoices', []));
+    setStaff(load('grace_staff', initialStaff));
+    setEquipment(load('grace_equipment', initialEquipment));
+    setAuditLogs(load('grace_audit_logs', []));
+    setPatients(load('grace_patients', []));
+    setSyncQueue(load('grace_sync_queue', []));
 
-    // Monitor connectivity
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
-
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
     setIsOnline(navigator.onLine);
@@ -55,31 +75,28 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  // Save to local storage whenever data changes
+  // Sync state to localStorage
   useEffect(() => {
-    localStorage.setItem('grace_records', JSON.stringify(records));
-    localStorage.setItem('grace_appointments', JSON.stringify(appointments));
-    localStorage.setItem('grace_invoices', JSON.stringify(invoices));
-    localStorage.setItem('grace_sync_queue', JSON.stringify(syncQueue));
-  }, [records, appointments, invoices, syncQueue]);
+    const save = (key: string, data: any) => localStorage.setItem(key, JSON.stringify(data));
+    save('grace_records', records);
+    save('grace_appointments', appointments);
+    save('grace_invoices', invoices);
+    save('grace_staff', staff);
+    save('grace_equipment', equipment);
+    save('grace_audit_logs', auditLogs);
+    save('grace_patients', patients);
+    save('grace_sync_queue', syncQueue);
+  }, [records, appointments, invoices, staff, equipment, auditLogs, patients, syncQueue]);
 
-  // Automatic Sync when coming back online
-  useEffect(() => {
-    if (isOnline && syncQueue.length > 0) {
-      syncData();
-    }
-  }, [isOnline]);
-
-  const syncData = async () => {
-    if (!isOnline || syncQueue.length === 0) return;
-
-    setIsSyncing(true);
-    // Simulate network delay for sync
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    console.log(`Synced ${syncQueue.length} items to server.`);
-    setSyncQueue([]);
-    setIsSyncing(false);
+  const logAction = (action: string, module: string) => {
+    const newLog: AuditLog = {
+      id: `log-${Date.now()}`,
+      user: "System Admin",
+      action,
+      timestamp: new Date().toLocaleString(),
+      module
+    };
+    setAuditLogs(prev => [newLog, ...prev].slice(0, 50));
   };
 
   const addToQueue = (action: string, payload: any) => {
@@ -88,46 +105,83 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const syncData = async () => {
+    if (!isOnline || syncQueue.length === 0) return;
+    setIsSyncing(true);
+    await new Promise(r => setTimeout(r, 1500));
+    setSyncQueue([]);
+    setIsSyncing(false);
+    logAction("Manual Data Sync Completed", "System");
+  };
+
+  // Actions
   const addRecord = (record: BodyPart) => {
-    setRecords(prev => [record, ...prev]);
+    setRecords(p => [record, ...p]);
+    logAction(`Added scan record: ${record.name}`, "Inventory");
     addToQueue('ADD_RECORD', record);
   };
 
   const updateRecord = (record: BodyPart) => {
-    setRecords(prev => prev.map(r => r.id === record.id ? record : r));
+    setRecords(p => p.map(r => r.id === record.id ? record : r));
+    logAction(`Updated scan record: ${record.name}`, "Inventory");
     addToQueue('UPDATE_RECORD', record);
   };
 
   const deleteRecord = (id: string) => {
-    setRecords(prev => prev.filter(r => r.id !== id));
+    setRecords(p => p.filter(r => r.id !== id));
+    logAction(`Deleted record: ${id}`, "Inventory");
     addToQueue('DELETE_RECORD', { id });
   };
 
   const addAppointment = (apt: any) => {
-    setAppointments(prev => [apt, ...prev]);
+    setAppointments(p => [apt, ...p]);
+    logAction(`New appointment booked for: ${apt.patientName}`, "Appointments");
     addToQueue('ADD_APPOINTMENT', apt);
   };
 
   const updateAppointment = (id: string, status: string) => {
-    setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: status as any } : a));
+    setAppointments(p => p.map(a => a.id === id ? { ...a, status: status as any } : a));
+    logAction(`Appointment ${id} status updated to ${status}`, "Appointments");
     addToQueue('UPDATE_APPOINTMENT', { id, status });
   };
 
+  const attachReport = (id: string) => {
+    setAppointments(p => p.map(a => a.id === id ? { ...a, reportAttached: true } : a));
+    logAction(`Diagnostic report attached to appointment ${id}`, "Clinical");
+  };
+
   const addInvoice = (inv: Invoice) => {
-    setInvoices(prev => [inv, ...prev]);
+    setInvoices(p => [inv, ...p]);
+    logAction(`Invoice generated for ${inv.patientName}: $${inv.amount}`, "Billing");
     addToQueue('ADD_INVOICE', inv);
   };
 
   const payInvoice = (id: string) => {
-    setInvoices(prev => prev.map(i => i.id === id ? { ...i, status: 'paid' } : i));
+    setInvoices(p => p.map(i => i.id === id ? { ...i, status: 'paid' } : i));
+    logAction(`Payment received for invoice ${id}`, "Billing");
     addToQueue('PAY_INVOICE', { id });
+  };
+
+  const addStaff = (member: Staff) => {
+    setStaff(p => [member, ...p]);
+    logAction(`Registered new staff member: ${member.name}`, "Human Resources");
+  };
+
+  const updateStaff = (member: Staff) => {
+    setStaff(p => p.map(s => s.id === member.id ? member : s));
+    logAction(`Updated staff profile: ${member.name}`, "Human Resources");
+  };
+
+  const updateEquipment = (item: Equipment) => {
+    setEquipment(p => p.map(e => e.id === item.id ? item : e));
+    logAction(`Updated equipment status: ${item.name}`, "Assets");
   };
 
   return (
     <DataContext.Provider value={{
-      records, appointments, invoices, isOnline, isSyncing,
-      addRecord, updateRecord, deleteRecord,
-      addAppointment, updateAppointment, addInvoice, payInvoice, syncData
+      records, appointments, invoices, staff, equipment, auditLogs, patients, isOnline, isSyncing,
+      addRecord, updateRecord, deleteRecord, addAppointment, updateAppointment, attachReport,
+      addInvoice, payInvoice, addStaff, updateStaff, updateEquipment, syncData
     }}>
       {children}
     </DataContext.Provider>
@@ -136,8 +190,6 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
 export function useData() {
   const context = useContext(DataContext);
-  if (context === undefined) {
-    throw new Error('useData must be used within a DataProvider');
-  }
+  if (!context) throw new Error('useData must be used within DataProvider');
   return context;
 }

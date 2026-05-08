@@ -5,7 +5,7 @@ import { scanTypes, branches, BodyPart, Invoice } from "@/lib/data";
 import { useData } from "@/context/DataContext";
 import {
   Plus, Search, DollarSign, X, ShoppingCart,
-  ArrowRight, CreditCard, Printer, User, Activity, Wifi, WifiOff, RefreshCw, Trash2
+  ArrowRight, CreditCard, Printer, User, Activity, Wifi, WifiOff, RefreshCw, ChevronLeft, ShieldCheck, CheckCircle2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -18,6 +18,7 @@ export default function POSPage() {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [isPosModalOpen, setIsPosModalOpen] = useState(false);
+  const [receiptToPrint, setReceiptToPrint] = useState<Invoice | null>(null);
 
   // POS Form State
   const [posData, setPosData] = useState({
@@ -47,14 +48,13 @@ export default function POSPage() {
     e.preventDefault();
     const scan = records.find(r => r.id === posData.scanId);
     const branch = branches.find(b => b.id === posData.branchId);
-
     if (!scan || !branch) return;
 
     const newInvoice: Invoice = {
-      id: `INV-${Date.now()}`,
+      id: `GRC-${Math.floor(Math.random() * 100000)}`,
       patientName: posData.patientName,
       scanName: scan.name,
-      amount: scan.price || 0,
+      amount: scan.price,
       date: new Date().toLocaleDateString(),
       status: "unpaid",
       branchName: branch.name,
@@ -65,244 +65,284 @@ export default function POSPage() {
     setPosData({ patientName: "", scanId: "", branchId: branches[0].id });
   };
 
+  const processPayment = (inv: Invoice) => {
+    payInvoice(inv.id);
+    setReceiptToPrint({ ...inv, status: "paid" });
+  };
+
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col font-sans">
-      {/* POS Header */}
-      <header className="bg-secondary text-white px-8 py-4 flex justify-between items-center shadow-lg">
-        <div className="flex items-center gap-4">
-          <div className="bg-primary p-2 rounded-xl">
-            <ShoppingCart className="h-6 w-6 text-white" />
-          </div>
+    <div className="min-h-screen bg-[#F0F2F5] flex flex-col font-sans antialiased text-secondary">
+      {/* Dynamic Header */}
+      <header className="bg-secondary text-white px-8 py-5 flex justify-between items-center shadow-2xl z-50">
+        <div className="flex items-center gap-6">
+          <Link href="/admin" className="p-3 bg-slate-800 rounded-2xl hover:bg-slate-700 transition-all group">
+            <ChevronLeft className="h-5 w-5 text-slate-400 group-hover:text-primary transition-colors" />
+          </Link>
           <div>
-            <h1 className="text-xl font-bold tracking-tight">GRACE POS <span className="text-primary">v1.0</span></h1>
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Billing Terminal</p>
+            <h1 className="text-2xl font-black tracking-tighter flex items-center gap-2 italic">
+              GRACE<span className="text-primary not-italic">BILLING</span>
+            </h1>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500">Terminal ID: 8820-X</span>
+              <div className="w-1 h-1 rounded-full bg-slate-700" />
+              <span className="text-[9px] font-black uppercase tracking-[0.2em] text-primary">{branches[0].name.split("-")[1]}</span>
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-8">
-          <div className="hidden lg:flex items-center gap-6 border-r border-slate-700 pr-8">
+        <div className="flex items-center gap-12">
+          <div className="hidden lg:flex items-center gap-10">
             <div className="text-right">
-              <p className="text-[10px] text-slate-400 uppercase font-bold">Today's Sales</p>
-              <p className="text-lg font-black text-primary">${stats.todayRevenue}</p>
+              <p className="text-[9px] text-slate-500 uppercase font-black tracking-widest mb-1">Session Volume</p>
+              <p className="text-2xl font-black text-white leading-none">${stats.todayRevenue.toLocaleString()}</p>
             </div>
+            <div className="h-8 w-px bg-slate-800" />
             <div className="text-right">
-              <p className="text-[10px] text-slate-400 uppercase font-bold">Processed</p>
-              <p className="text-lg font-black text-white">{stats.count}</p>
+              <p className="text-[9px] text-slate-500 uppercase font-black tracking-widest mb-1">Queue Status</p>
+              <p className="text-2xl font-black text-primary leading-none">{stats.unpaid}</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 px-3 py-1 bg-slate-800 rounded-full border border-slate-700">
-              {isOnline ? <Wifi className="h-3 w-3 text-green-500" /> : <WifiOff className="h-3 w-3 text-red-500" />}
-              <span className="text-[10px] font-bold uppercase">{isOnline ? "Online" : "Offline"}</span>
-              {isSyncing && <RefreshCw className="h-3 w-3 animate-spin text-primary ml-1" />}
-            </div>
-            <Link href="/admin" className="text-slate-400 hover:text-white text-sm font-medium transition-colors">Admin Dashboard</Link>
+          <div className={cn(
+            "flex items-center gap-3 px-4 py-2 rounded-2xl border transition-all duration-500",
+            isOnline ? "bg-green-500/10 border-green-500/20" : "bg-red-500/10 border-red-500/20"
+          )}>
+            <div className={cn("w-2 h-2 rounded-full", isOnline ? "bg-green-500 shadow-[0_0_8px_#22c55e]" : "bg-red-500 shadow-[0_0_8px_#ef4444]")} />
+            <span className="text-[10px] font-black uppercase tracking-widest">{isOnline ? "Server Link: Active" : "Local: Offline"}</span>
+            {isSyncing && <RefreshCw className="h-3 w-3 animate-spin text-primary" />}
           </div>
         </div>
       </header>
 
-      {/* Main Content Area */}
-      <main className="flex-grow p-8 flex gap-8 min-h-0">
-        {/* Invoice List */}
-        <div className="flex-grow flex flex-col bg-white rounded-3xl shadow-xl shadow-slate-200/50 border overflow-hidden">
-          <div className="p-6 border-b bg-slate-50/50 flex justify-between items-center">
-            <div className="relative w-96">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+      {/* Workspace */}
+      <main className="flex-grow p-8 flex gap-8 overflow-hidden">
+        {/* Main List */}
+        <div className="flex-grow flex flex-col bg-white rounded-[40px] shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-white/50 overflow-hidden">
+          <div className="p-8 border-b bg-slate-50/30 flex justify-between items-center gap-8">
+            <div className="relative flex-grow max-w-2xl">
+              <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
               <input
                 type="text"
-                placeholder="Search by Patient name or Invoice ID..."
-                className="w-full pl-10 pr-4 py-3 rounded-2xl border-slate-200 focus:ring-2 focus:ring-primary/20 outline-none"
+                placeholder="Find patient or invoice number..."
+                className="w-full pl-16 pr-6 py-5 rounded-[24px] border-transparent bg-white shadow-inner focus:ring-4 focus:ring-primary/10 outline-none text-lg font-bold placeholder:text-slate-300 transition-all"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
             <button
               onClick={() => setIsPosModalOpen(true)}
-              className="bg-primary text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
+              className="bg-primary text-white px-10 py-5 rounded-[24px] font-black uppercase tracking-widest text-xs flex items-center gap-3 hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary/20"
             >
               <Plus className="h-5 w-5" />
-              New Sale (F2)
+              New Sale
             </button>
           </div>
 
-          <div className="flex-grow overflow-y-auto">
+          <div className="flex-grow overflow-y-auto custom-scrollbar">
             <table className="w-full text-left">
-              <thead className="sticky top-0 bg-white z-10">
-                <tr className="border-b text-slate-400 text-[10px] font-black uppercase tracking-widest">
-                  <th className="px-8 py-4">ID</th>
-                  <th className="px-8 py-4">Patient Details</th>
-                  <th className="px-8 py-4">Procedure</th>
-                  <th className="px-8 py-4">Amount</th>
-                  <th className="px-8 py-4">Status</th>
-                  <th className="px-8 py-4 text-right">Actions</th>
+              <thead className="sticky top-0 bg-white/95 backdrop-blur-md z-10">
+                <tr className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] border-b">
+                  <th className="px-10 py-6">Voucher ID</th>
+                  <th className="px-10 py-6">Patient</th>
+                  <th className="px-10 py-6">Procedure</th>
+                  <th className="px-10 py-6 text-center">Fee</th>
+                  <th className="px-10 py-6">Status</th>
+                  <th className="px-10 py-6 text-right">Settlement</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {filteredInvoices.map((inv) => (
-                  <tr key={inv.id} className="hover:bg-slate-50 transition-colors group">
-                    <td className="px-8 py-5 font-mono text-[10px] text-slate-400">{inv.id}</td>
-                    <td className="px-8 py-5">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
-                          <User className="h-4 w-4" />
-                        </div>
-                        <div>
-                          <p className="font-bold text-secondary text-sm">{inv.patientName}</p>
-                          <p className="text-[10px] text-slate-400">{inv.branchName}</p>
-                        </div>
-                      </div>
+                  <tr key={inv.id} className="hover:bg-primary/[0.02] transition-colors group">
+                    <td className="px-10 py-6 font-mono text-xs font-black text-slate-400 uppercase tracking-tighter">{inv.id}</td>
+                    <td className="px-10 py-6">
+                      <p className="font-black text-secondary text-base">{inv.patientName}</p>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">{inv.branchName}</p>
                     </td>
-                    <td className="px-8 py-5">
-                      <p className="text-sm font-medium text-slate-600">{inv.scanName}</p>
-                    </td>
-                    <td className="px-8 py-5 font-black text-secondary">
-                      ${inv.amount}
-                    </td>
-                    <td className="px-8 py-5">
+                    <td className="px-10 py-6 font-bold text-slate-500 text-sm">{inv.scanName}</td>
+                    <td className="px-10 py-6 text-center font-black text-secondary text-lg">${inv.amount}</td>
+                    <td className="px-10 py-6">
                       <span className={cn(
-                        "px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider",
-                        inv.status === "paid" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-                      )}>
-                        {inv.status}
-                      </span>
+                        "px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest",
+                        inv.status === "paid" ? "bg-green-500/10 text-green-600 border border-green-500/20" : "bg-red-500/10 text-red-600 border border-red-500/20"
+                      )}>{inv.status}</span>
                     </td>
-                    <td className="px-8 py-5 text-right">
-                      <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        {inv.status === "unpaid" && (
+                    <td className="px-10 py-6 text-right">
+                      <div className="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-4 group-hover:translate-x-0">
+                        {inv.status === "unpaid" ? (
                           <button
-                            onClick={() => payInvoice(inv.id)}
-                            className="bg-green-600 text-white p-2 rounded-xl hover:bg-green-700 transition-colors shadow-sm"
-                            title="Quick Pay"
+                            onClick={() => processPayment(inv)}
+                            className="bg-secondary text-white px-5 py-2.5 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-primary transition-colors flex items-center gap-2 shadow-lg shadow-secondary/10"
                           >
-                            <CreditCard className="h-4 w-4" />
+                            <CreditCard className="h-4 w-4 text-primary" /> Collect
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => setReceiptToPrint(inv)}
+                            className="bg-slate-100 text-slate-600 p-2.5 rounded-2xl hover:bg-slate-200 transition-all"
+                          >
+                            <Printer className="h-4 w-4" />
                           </button>
                         )}
-                        <button className="bg-slate-100 text-slate-600 p-2 rounded-xl hover:bg-slate-200 transition-colors">
-                          <Printer className="h-4 w-4" />
-                        </button>
                       </div>
                     </td>
                   </tr>
                 ))}
-                {filteredInvoices.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="py-20 text-center">
-                      <div className="max-w-xs mx-auto">
-                        <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300">
-                          <Search className="h-8 w-8" />
-                        </div>
-                        <p className="text-slate-500 font-medium">No sales records found.</p>
-                        <p className="text-xs text-slate-400 mt-1">Try adjusting your search or create a new invoice.</p>
-                      </div>
-                    </td>
-                  </tr>
-                )}
               </tbody>
             </table>
           </div>
         </div>
 
-        {/* Action Panel */}
-        <div className="w-80 flex flex-col gap-6">
-          <div className="bg-secondary rounded-3xl p-8 text-white shadow-xl shadow-slate-200/50">
-            <h3 className="font-bold text-lg mb-6 flex items-center gap-2">
-              <Activity className="h-5 w-5 text-primary" /> Active Summary
-            </h3>
-            <div className="space-y-6">
-              <div className="p-4 bg-slate-800/50 rounded-2xl border border-slate-700/50">
-                <p className="text-xs text-slate-400 font-bold uppercase mb-1">Unpaid Balance</p>
-                <p className="text-3xl font-black text-red-400">
-                  ${invoices.filter(i => i.status === "unpaid").reduce((acc, curr) => acc + curr.amount, 0)}
-                </p>
-                <p className="text-[10px] text-slate-500 mt-1">{stats.unpaid} pending invoices</p>
-              </div>
-              <div className="p-4 bg-slate-800/50 rounded-2xl border border-slate-700/50">
-                <p className="text-xs text-slate-400 font-bold uppercase mb-1">Total Sales (Today)</p>
-                <p className="text-3xl font-black text-primary">${stats.todayRevenue}</p>
-                <p className="text-[10px] text-slate-500 mt-1">{stats.count} completed transactions</p>
+        {/* Right Panel */}
+        <div className="w-[400px] flex flex-col gap-8">
+          {/* Quick Stats */}
+          <div className="bg-secondary rounded-[40px] p-10 text-white shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-12 opacity-5 scale-150 rotate-12">
+               <ShieldCheck className="h-40 w-40" />
+            </div>
+            <div className="relative z-10">
+              <h3 className="font-black text-xl mb-10 flex items-center gap-3 italic tracking-tighter">
+                <Activity className="h-6 w-6 text-primary not-italic" /> SESSION<span className="text-primary not-italic">KPI</span>
+              </h3>
+              <div className="space-y-8">
+                <div className="flex justify-between items-end border-b border-slate-800 pb-6">
+                  <div>
+                    <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] mb-2">Awaiting Payment</p>
+                    <p className="text-4xl font-black text-red-400 tracking-tighter">
+                      ${invoices.filter(i => i.status === "unpaid").reduce((acc, curr) => acc + curr.amount, 0).toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs font-black text-slate-400 leading-none">{stats.unpaid}</p>
+                    <p className="text-[8px] text-slate-600 font-black uppercase mt-1">Files</p>
+                  </div>
+                </div>
+                <div>
+                   <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] mb-2">Collection Today</p>
+                   <p className="text-5xl font-black text-primary tracking-tighter">
+                      ${stats.todayRevenue.toLocaleString()}
+                   </p>
+                   <div className="flex items-center gap-2 mt-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                      <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                      {stats.count} Successful Settlements
+                   </div>
+                </div>
               </div>
             </div>
-
-            <button
-              onClick={() => setIsPosModalOpen(true)}
-              className="w-full mt-8 bg-primary text-white py-4 rounded-2xl font-bold hover:bg-primary/90 transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
-            >
-              Start Transaction
-              <ArrowRight className="h-5 w-5" />
-            </button>
           </div>
 
-          <div className="bg-white rounded-3xl p-6 border shadow-lg shadow-slate-200/50 flex flex-col items-center text-center">
-            <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center text-slate-300 mb-3">
-              <Printer className="h-6 w-6" />
+          {/* Receipt Preview Component */}
+          <div className={cn(
+            "flex-grow bg-white rounded-[40px] border shadow-2xl p-8 flex flex-col transition-all duration-700",
+            receiptToPrint ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0 pointer-events-none"
+          )}>
+            <div className="flex justify-between items-center mb-8 pb-4 border-b border-dashed">
+               <p className="text-xs font-black text-secondary uppercase tracking-[0.2em]">Settlement View</p>
+               <button onClick={() => setReceiptToPrint(null)}><X className="h-5 w-5 text-slate-300 hover:text-red-500" /></button>
             </div>
-            <h4 className="font-bold text-secondary text-sm">Receipt Printer</h4>
-            <p className="text-[10px] text-slate-400 mt-1">EPSON TM-T88VI • Online</p>
+
+            {receiptToPrint && (
+              <div className="space-y-6 flex-grow flex flex-col items-center text-center">
+                 <div className="w-16 h-16 bg-green-50 text-green-500 rounded-full flex items-center justify-center animate-bounce">
+                    <CheckCircle2 className="h-8 w-8" />
+                 </div>
+                 <div>
+                    <p className="text-2xl font-black text-secondary tracking-tighter uppercase italic">Grace Receipt</p>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em] mt-1">Transaction Verified</p>
+                 </div>
+
+                 <div className="w-full space-y-4 pt-6 text-sm">
+                    <div className="flex justify-between font-medium text-slate-500">
+                       <span>Patient:</span>
+                       <span className="font-bold text-secondary">{receiptToPrint.patientName}</span>
+                    </div>
+                    <div className="flex justify-between font-medium text-slate-500">
+                       <span>Service:</span>
+                       <span className="font-bold text-secondary">{receiptToPrint.scanName}</span>
+                    </div>
+                    <div className="flex justify-between font-medium text-slate-500">
+                       <span>Reference:</span>
+                       <span className="font-mono text-xs font-bold text-secondary">{receiptToPrint.id}</span>
+                    </div>
+                    <div className="h-px w-full border-t border-dashed my-4" />
+                    <div className="flex justify-between items-center">
+                       <span className="text-xs font-black uppercase text-slate-400">Total Paid</span>
+                       <span className="text-3xl font-black text-secondary italic">${receiptToPrint.amount}</span>
+                    </div>
+                 </div>
+
+                 <button className="w-full mt-auto bg-slate-100 hover:bg-slate-200 text-slate-600 py-4 rounded-3xl font-black text-[11px] uppercase tracking-widest flex items-center justify-center gap-3 transition-all">
+                    <Printer className="h-4 w-4" />
+                    Print Hardcopy
+                 </button>
+              </div>
+            )}
           </div>
         </div>
       </main>
 
       {/* New Sale Modal */}
       {isPosModalOpen && (
-        <div className="fixed inset-0 bg-secondary/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-[40px] shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div className="p-8 border-b flex justify-between items-center bg-slate-50">
+        <div className="fixed inset-0 bg-secondary/60 backdrop-blur-lg z-[100] flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-[50px] shadow-[0_50px_100px_rgba(0,0,0,0.3)] w-full max-w-xl overflow-hidden animate-in fade-in zoom-in duration-300">
+            <div className="p-12 border-b flex justify-between items-center bg-slate-50/50">
               <div>
-                <h3 className="text-2xl font-black text-secondary">New Invoice</h3>
-                <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Quick Billing Entry</p>
+                <h3 className="text-4xl font-black text-secondary tracking-tighter uppercase italic">Voucher</h3>
+                <p className="text-[10px] text-primary font-black uppercase tracking-[0.3em] mt-2">Immediate Diagnostic Settlement</p>
               </div>
-              <button onClick={() => setIsPosModalOpen(false)} className="text-slate-400 hover:text-secondary bg-white p-2 rounded-2xl border shadow-sm">
-                <X className="h-6 w-6" />
+              <button onClick={() => setIsPosModalOpen(false)} className="text-slate-300 hover:text-red-500 transition-colors p-4">
+                <X className="h-8 w-8" />
               </button>
             </div>
-            <form onSubmit={handleCreateInvoice} className="p-8 space-y-6">
-              <div className="space-y-2">
-                <label className="text-xs font-black text-secondary uppercase tracking-widest">Patient Name</label>
+            <form onSubmit={handleCreateInvoice} className="p-12 space-y-10">
+              <div className="space-y-4">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-2">Patient Legal Name</label>
                 <input
                   required
                   autoFocus
                   type="text"
-                  className="w-full px-6 py-4 rounded-2xl border-slate-200 focus:ring-2 focus:ring-primary/20 outline-none text-lg font-bold"
-                  placeholder="John Doe"
+                  className="w-full px-8 py-6 rounded-[30px] border-2 border-slate-100 focus:border-primary focus:ring-0 outline-none text-2xl font-black placeholder:text-slate-100 transition-all shadow-sm"
+                  placeholder="EX: JOHN KWAME OSEI"
                   value={posData.patientName}
                   onChange={(e) => setPosData({ ...posData, patientName: e.target.value })}
                 />
               </div>
-              <div className="space-y-2">
-                <label className="text-xs font-black text-secondary uppercase tracking-widest">Select Scan Procedure</label>
-                <select
-                  required
-                  className="w-full px-6 py-4 rounded-2xl border-slate-200 focus:ring-2 focus:ring-primary/20 outline-none text-lg font-bold bg-white"
-                  value={posData.scanId}
-                  onChange={(e) => setPosData({ ...posData, scanId: e.target.value })}
-                >
-                  <option value="">Choose a procedure...</option>
-                  {records.map(r => (
-                    <option key={r.id} value={r.id}>{r.name} (${r.price})</option>
-                  ))}
-                </select>
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-black text-secondary uppercase tracking-widest">Center Branch</label>
-                <select
-                  required
-                  className="w-full px-6 py-4 rounded-2xl border-slate-200 focus:ring-2 focus:ring-primary/20 outline-none font-bold bg-white"
-                  value={posData.branchId}
-                  onChange={(e) => setPosData({ ...posData, branchId: e.target.value })}
-                >
-                  {branches.map(b => (
-                    <option key={b.id} value={b.id}>{b.name}</option>
-                  ))}
-                </select>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-4">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-2">Clinical Procedure</label>
+                  <select
+                    required
+                    className="w-full px-8 py-6 rounded-[30px] border-2 border-slate-100 focus:border-primary outline-none font-black bg-white shadow-sm appearance-none text-sm"
+                    value={posData.scanId}
+                    onChange={(e) => setPosData({ ...posData, scanId: e.target.value })}
+                  >
+                    <option value="">Select Service...</option>
+                    {records.map(r => (
+                      <option key={r.id} value={r.id}>{r.name} (${r.price})</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-4">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-2">Assigned Branch</label>
+                  <select
+                    required
+                    className="w-full px-8 py-6 rounded-[30px] border-2 border-slate-100 focus:border-primary outline-none font-black bg-white shadow-sm appearance-none text-sm"
+                    value={posData.branchId}
+                    onChange={(e) => setPosData({ ...posData, branchId: e.target.value })}
+                  >
+                    {branches.map(b => (
+                      <option key={b.id} value={b.id}>{b.name.split("-")[1]}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
-              <div className="pt-6 flex gap-4">
+              <div className="pt-8">
                 <button
                   type="submit"
-                  className="flex-1 bg-secondary text-white py-5 rounded-[24px] font-black hover:bg-slate-800 flex items-center justify-center gap-3 transition-all shadow-xl shadow-secondary/20"
+                  className="w-full bg-secondary text-white py-8 rounded-[35px] font-black text-lg tracking-[0.1em] uppercase hover:bg-primary transition-all shadow-[0_20px_40px_rgba(0,0,0,0.1)] flex items-center justify-center gap-4 active:scale-95"
                 >
-                  GENERATE & PAY
+                  Confirm & Finalize
                   <ArrowRight className="h-6 w-6 text-primary" />
                 </button>
               </div>
