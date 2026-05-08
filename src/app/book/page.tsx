@@ -2,25 +2,18 @@
 
 import { useState, useMemo, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { scanTypes, bodyParts as initialBodyParts, branches, BodyPart } from "@/lib/data";
+import { scanTypes, branches, BodyPart } from "@/lib/data";
+import { useData } from "@/context/DataContext";
 import { Calendar, Clock, User, Mail, Phone, FileText, CheckCircle2, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 function BookContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { records, addAppointment } = useData();
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [records, setRecords] = useState<BodyPart[]>(initialBodyParts);
-
-  // Load records from localStorage
-  useEffect(() => {
-    const savedRecords = localStorage.getItem("grace_records");
-    if (savedRecords) {
-      setRecords(JSON.parse(savedRecords));
-    }
-  }, []);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -54,7 +47,6 @@ function BookContent() {
 
     // Simulate API call
     setTimeout(() => {
-      const appointments = JSON.parse(localStorage.getItem("grace_appointments") || "[]");
       const newAppointment = {
         id: `apt-${Date.now()}`,
         ...formData,
@@ -63,8 +55,7 @@ function BookContent() {
         createdAt: new Date().toISOString(),
       };
 
-      localStorage.setItem("grace_appointments", JSON.stringify([newAppointment, ...appointments]));
-
+      addAppointment(newAppointment);
       setIsSubmitting(false);
       setIsSuccess(true);
     }, 1500);
@@ -276,16 +267,6 @@ function BookContent() {
                     <option value="afternoon">Afternoon (12:00 PM - 4:00 PM)</option>
                     <option value="evening">Evening (4:00 PM - 8:00 PM)</option>
                   </select>
-                </div>
-                <div className="md:col-span-2 space-y-2">
-                  <label className="text-sm font-bold text-secondary">Additional Notes or Symptoms (Optional)</label>
-                  <textarea
-                    rows={3}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary/20 outline-none transition-all resize-none"
-                    placeholder="Mention any allergies, previous conditions, or specific concerns..."
-                    value={formData.notes}
-                    onChange={(e) => setFormData({...formData, notes: e.target.value})}
-                  />
                 </div>
               </div>
               <div className="mt-12 flex justify-between">

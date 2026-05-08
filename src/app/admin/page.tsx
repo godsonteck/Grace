@@ -1,23 +1,25 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
-import { scanTypes, bodyParts as initialBodyParts, BodyPart, branches, Invoice } from "@/lib/data";
+import { useState, useMemo } from "react";
+import { scanTypes, branches, BodyPart, Invoice } from "@/lib/data";
+import { useData } from "@/context/DataContext";
 import {
   LayoutDashboard, Plus, Search, Edit2, Trash2, DollarSign,
   Settings, Users, X, Save, Calendar, CheckCircle, Clock,
-  Printer, CreditCard, ShoppingCart, ArrowRight
+  Printer, CreditCard, ShoppingCart, ArrowRight, RefreshCw, Wifi, WifiOff, BarChart3, TrendingUp
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function AdminPage() {
+  const {
+    records, appointments, invoices, isOnline, isSyncing,
+    addRecord, updateRecord, deleteRecord,
+    updateAppointment, addInvoice, payInvoice, syncData
+  } = useData();
+
   const [activeTab, setActiveTab] = useState("dashboard");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("All");
-
-  // Data State
-  const [records, setRecords] = useState<BodyPart[]>(initialBodyParts);
-  const [appointments, setAppointments] = useState<any[]>([]);
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -40,31 +42,6 @@ export default function AdminPage() {
     branchId: branches[0].id,
   });
 
-  // Load from localStorage on mount
-  useEffect(() => {
-    const savedRecords = localStorage.getItem("grace_records");
-    if (savedRecords) setRecords(JSON.parse(savedRecords));
-
-    const savedApts = localStorage.getItem("grace_appointments");
-    if (savedApts) setAppointments(JSON.parse(savedApts));
-
-    const savedInvoices = localStorage.getItem("grace_invoices");
-    if (savedInvoices) setInvoices(JSON.parse(savedInvoices));
-  }, []);
-
-  // Sync to localStorage
-  useEffect(() => {
-    localStorage.setItem("grace_records", JSON.stringify(records));
-  }, [records]);
-
-  useEffect(() => {
-    localStorage.setItem("grace_appointments", JSON.stringify(appointments));
-  }, [appointments]);
-
-  useEffect(() => {
-    localStorage.setItem("grace_invoices", JSON.stringify(invoices));
-  }, [invoices]);
-
   const filteredRecords = useMemo(() => {
     return records.filter(part => {
       const matchesSearch = part.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -75,14 +52,18 @@ export default function AdminPage() {
   }, [records, searchTerm, filterType]);
 
   const stats = useMemo(() => {
+    const paidInvoices = invoices.filter(i => i.status === "paid");
     return {
       totalScans: records.length,
       totalValue: records.reduce((acc, curr) => acc + (curr.price || 0), 0),
       pendingAppointments: appointments.filter(a => a.status === "pending").length,
-      totalRevenue: invoices.filter(i => i.status === "paid").reduce((acc, curr) => acc + curr.amount, 0),
+      totalRevenue: paidInvoices.reduce((acc, curr) => acc + curr.amount, 0),
       ctCount: records.filter(r => r.scanTypeId === "ct-scan").length,
       xrayCount: records.filter(r => r.scanTypeId === "xray-scan").length,
       usCount: records.filter(r => r.scanTypeId === "ultrasound-scan").length,
+      ctRev: paidInvoices.filter(i => i.scanName.includes("CT")).reduce((acc, curr) => acc + curr.amount, 0),
+      xrRev: paidInvoices.filter(i => i.scanName.includes("X-Ray") || i.scanName.includes("XR")).reduce((acc, curr) => acc + curr.amount, 0),
+      usRev: paidInvoices.filter(i => i.scanName.includes("Ultrasound") || i.scanName.includes("US")).reduce((acc, curr) => acc + curr.amount, 0),
     };
   }, [records, appointments, invoices]);
 
@@ -114,13 +95,9 @@ export default function AdminPage() {
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     if (editingRecord) {
-      setRecords(records.map(r => r.id === editingRecord.id ? { ...r, ...formData } : r));
+      updateRecord({ ...editingRecord, ...formData });
     } else {
-      const newRecord: BodyPart = {
-        id: `custom-${Date.now()}`,
-        ...formData,
-      };
-      setRecords([newRecord, ...records]);
+      addRecord({ id: `custom-${Date.now()}`, ...formData });
     }
     setIsModalOpen(false);
   };
@@ -142,14 +119,10 @@ export default function AdminPage() {
       branchName: branch.name,
     };
 
-    setInvoices([newInvoice, ...invoices]);
+    addInvoice(newInvoice);
     setIsPosModalOpen(false);
     setPosData({ patientName: "", scanId: "", branchId: branches[0].id });
     setActiveTab("pos");
-  };
-
-  const handlePayInvoice = (id: string) => {
-    setInvoices(invoices.map(inv => inv.id === id ? { ...inv, status: "paid" } : inv));
   };
 
   return (
@@ -165,11 +138,11 @@ export default function AdminPage() {
         <nav className="flex-grow p-4 space-y-2">
           {[
             { id: "dashboard", name: "Dashboard", icon: LayoutDashboard },
+            { id: "reports", name: "Sales Reports", icon: BarChart3 },
             { id: "pos", name: "POS & Billing", icon: CreditCard },
             { id: "appointments", name: "Appointments", icon: Calendar, badge: stats.pendingAppointments },
             { id: "body-parts", name: "Body Parts & Scans", icon: Settings },
             { id: "prices", name: "Price Management", icon: DollarSign },
-            { id: "staff", name: "Staff Directory", icon: Users },
           ].map((item) => (
             <button
               key={item.id}
@@ -191,14 +164,21 @@ export default function AdminPage() {
             </button>
           ))}
         </nav>
-        <div className="p-6 border-t border-slate-700">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center font-bold">JD</div>
-            <div>
-              <p className="text-sm font-bold">John Doe</p>
-              <p className="text-xs text-slate-400">Administrator</p>
+
+        {/* Sync Info */}
+        <div className="p-4 border-t border-slate-700 space-y-3">
+          <div className="flex items-center justify-between px-2">
+            <div className="flex items-center gap-2">
+              {isOnline ? <Wifi className="h-4 w-4 text-green-500" /> : <WifiOff className="h-4 w-4 text-red-500" />}
+              <span className="text-xs font-bold uppercase tracking-wider">{isOnline ? "Online" : "Offline"}</span>
             </div>
+            {isSyncing && <RefreshCw className="h-3 w-3 animate-spin text-primary" />}
           </div>
+          {!isOnline && (
+            <p className="text-[10px] text-slate-400 px-2 leading-tight">
+              Changes will sync automatically when connection is restored.
+            </p>
+          )}
         </div>
       </aside>
 
@@ -207,24 +187,28 @@ export default function AdminPage() {
         <header className="bg-white border-b px-8 py-6 flex justify-between items-center sticky top-0 z-10">
           <h1 className="text-2xl font-bold text-secondary">
             {activeTab === "dashboard" ? "Admin Dashboard" :
+             activeTab === "reports" ? "System Reports" :
              activeTab === "pos" ? "Point of Sale" :
              activeTab === "appointments" ? "Appointment Requests" :
              activeTab === "body-parts" ? "Manage Body Parts & Scans" : "Admin Panel"}
           </h1>
           <div className="flex gap-3">
+            {isOnline && (
+              <button
+                onClick={() => syncData()}
+                disabled={isSyncing}
+                className="p-2 border rounded-lg hover:bg-slate-50 transition-colors"
+                title="Force Sync"
+              >
+                <RefreshCw className={cn("h-5 w-5 text-slate-400", isSyncing && "animate-spin text-primary")} />
+              </button>
+            )}
             <button
               onClick={() => setIsPosModalOpen(true)}
               className="bg-secondary text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-slate-800 transition-all"
             >
               <ShoppingCart className="h-5 w-5 text-primary" />
               New Sale
-            </button>
-            <button
-              onClick={() => handleOpenModal()}
-              className="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all"
-            >
-              <Plus className="h-5 w-5" />
-              Add Record
             </button>
           </div>
         </header>
@@ -272,23 +256,56 @@ export default function AdminPage() {
                         </div>
                       </div>
                     ))}
-                    {invoices.length === 0 && <p className="text-center text-muted italic py-4">No recent sales.</p>}
                   </div>
                 </div>
                 <div className="bg-white p-8 rounded-2xl border shadow-sm">
-                  <h3 className="text-lg font-bold text-secondary mb-6">Inventory Summary</h3>
-                  <div className="grid grid-cols-3 gap-4">
-                    {[
-                      { label: "CT", count: stats.ctCount, color: "text-primary" },
-                      { label: "X-Ray", count: stats.xrayCount, color: "text-blue-500" },
-                      { label: "U/S", count: stats.usCount, color: "text-teal-500" },
-                    ].map((item, i) => (
-                      <div key={i} className="text-center p-4 rounded-2xl bg-slate-50 border border-slate-100">
-                        <p className={cn("text-2xl font-black", item.color)}>{item.count}</p>
-                        <p className="text-xs text-slate-500 font-bold uppercase mt-1">{item.label}</p>
-                      </div>
-                    ))}
+                  <h3 className="text-lg font-bold text-secondary mb-6">System Status</h3>
+                  <div className={cn(
+                    "p-6 rounded-2xl flex items-center gap-4 border transition-all",
+                    isOnline ? "bg-green-50 border-green-100" : "bg-red-50 border-red-100"
+                  )}>
+                    <div className={cn("p-4 rounded-full text-white", isOnline ? "bg-green-500" : "bg-red-500")}>
+                      {isOnline ? <Wifi className="h-8 w-8" /> : <WifiOff className="h-8 w-8" />}
+                    </div>
+                    <div>
+                      <p className="text-lg font-bold text-secondary">{isOnline ? "Connected" : "Working Offline"}</p>
+                      <p className="text-sm text-slate-500">{isOnline ? "All systems operational. Cloud sync active." : "Local storage active. Data will sync later."}</p>
+                    </div>
                   </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === "reports" && (
+            <div className="space-y-8">
+              <div className="bg-white p-8 rounded-2xl border shadow-sm">
+                <div className="flex items-center justify-between mb-8">
+                  <div>
+                    <h3 className="text-xl font-bold text-secondary">Revenue by Scan Type</h3>
+                    <p className="text-sm text-muted">Analysis based on processed payments.</p>
+                  </div>
+                  <TrendingUp className="h-8 w-8 text-primary" />
+                </div>
+                <div className="space-y-6">
+                  {[
+                    { label: "CT Scans", amount: stats.ctRev, color: "bg-primary" },
+                    { label: "X-Rays", amount: stats.xrRev, color: "bg-blue-400" },
+                    { label: "Ultrasounds", amount: stats.usRev, color: "bg-teal-400" },
+                  ].map((item, i) => (
+                    <div key={i} className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="font-bold text-secondary">{item.label}</span>
+                        <span className="text-secondary font-mono">${item.amount}</span>
+                      </div>
+                      <div className="h-4 w-full bg-slate-100 rounded-full overflow-hidden">
+                        <div
+                          className={cn("h-full rounded-full transition-all duration-1000", item.color)}
+                          style={{ width: stats.totalRevenue > 0 ? `${(item.amount / stats.totalRevenue) * 100}%` : '0%' }}
+                        />
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -345,29 +362,19 @@ export default function AdminPage() {
                           <div className="flex justify-end gap-2">
                             {inv.status === "unpaid" && (
                               <button
-                                onClick={() => handlePayInvoice(inv.id)}
+                                onClick={() => payInvoice(inv.id)}
                                 className="p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-all"
-                                title="Process Payment"
                               >
                                 <CreditCard className="h-4 w-4" />
                               </button>
                             )}
-                            <button className="p-2 hover:bg-slate-100 rounded-lg text-slate-400" title="Print Receipt">
+                            <button className="p-2 hover:bg-slate-100 rounded-lg text-slate-400">
                               <Printer className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={() => setInvoices(invoices.filter(i => i.id !== inv.id))}
-                              className="p-2 hover:bg-red-50 rounded-lg text-slate-400 hover:text-red-500"
-                            >
-                              <Trash2 className="h-4 w-4" />
                             </button>
                           </div>
                         </td>
                       </tr>
                     ))}
-                    {invoices.length === 0 && (
-                      <tr><td colSpan={6} className="px-6 py-20 text-center text-slate-400 italic">No invoices found.</td></tr>
-                    )}
                   </tbody>
                 </table>
               </div>
@@ -381,8 +388,8 @@ export default function AdminPage() {
                   <thead>
                     <tr className="bg-slate-50 border-b text-slate-400 text-xs font-bold uppercase tracking-wider">
                       <th className="px-6 py-4">Patient</th>
-                      <th className="px-6 py-4">Scan & Branch</th>
-                      <th className="px-6 py-4">Date & Time</th>
+                      <th className="px-6 py-4">Scan</th>
+                      <th className="px-6 py-4">Date</th>
                       <th className="px-6 py-4">Status</th>
                       <th className="px-6 py-4 text-right">Actions</th>
                     </tr>
@@ -390,47 +397,26 @@ export default function AdminPage() {
                   <tbody className="divide-y">
                     {appointments.map((apt) => (
                       <tr key={apt.id} className="hover:bg-slate-50/50 transition-colors">
-                        <td className="px-6 py-4">
-                          <div className="font-bold text-secondary">{apt.patientName}</div>
-                          <div className="text-xs text-slate-400">{apt.patientPhone}</div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-secondary">{apt.scanName}</div>
-                          <div className="text-xs text-slate-400">
-                            {branches.find(b => b.id === apt.branchId)?.name || "Ho Branch"}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm text-secondary font-medium">{apt.date}</div>
-                          <div className="text-xs text-slate-400 capitalize">{apt.time} slot</div>
-                        </td>
+                        <td className="px-6 py-4 font-bold text-secondary">{apt.patientName}</td>
+                        <td className="px-6 py-4 text-sm text-slate-500">{apt.scanName}</td>
+                        <td className="px-6 py-4 text-sm text-slate-500">{apt.date}</td>
                         <td className="px-6 py-4">
                           <span className={cn(
-                            "px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full",
-                            apt.status === "pending" ? "bg-orange-100 text-orange-700" :
-                            apt.status === "confirmed" ? "bg-blue-100 text-blue-700" :
-                            apt.status === "completed" ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-700"
+                            "px-3 py-1 text-[10px] font-bold uppercase rounded-full",
+                            apt.status === "pending" ? "bg-orange-100 text-orange-700" : "bg-green-100 text-green-700"
                           )}>
                             {apt.status}
                           </span>
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <div className="flex justify-end gap-2">
-                            {apt.status === "pending" && (
-                              <button
-                                onClick={() => setAppointments(appointments.map(a => a.id === apt.id ? { ...a, status: "confirmed" } : a))}
-                                className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all"
-                              >
-                                <CheckCircle className="h-4 w-4" />
-                              </button>
-                            )}
+                          {apt.status === "pending" && (
                             <button
-                              onClick={() => setAppointments(appointments.filter(a => a.id !== apt.id))}
-                              className="p-2 hover:bg-red-50 rounded-lg text-slate-400 hover:text-red-500"
+                              onClick={() => updateAppointment(apt.id, "confirmed")}
+                              className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all"
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <CheckCircle className="h-4 w-4" />
                             </button>
-                          </div>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -442,63 +428,30 @@ export default function AdminPage() {
 
           {activeTab === "body-parts" && (
             <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
-              <div className="p-6 border-b flex flex-col md:flex-row gap-4 justify-between items-center">
-                <div className="relative w-full md:w-96">
+              <div className="p-6 border-b flex justify-between items-center">
+                <div className="relative w-96">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
                   <input
                     type="text"
                     placeholder="Search records..."
-                    className="w-full pl-10 pr-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    className="w-full pl-10 pr-4 py-2 rounded-lg border focus:outline-none focus:ring-2"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
-                <div className="flex gap-2">
-                  <select
-                    value={filterType}
-                    onChange={(e) => setFilterType(e.target.value)}
-                    className="px-4 py-2 rounded-lg border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-                  >
-                    <option value="All">All Scan Types</option>
-                    {scanTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                  </select>
-                </div>
+                <button onClick={() => handleOpenModal()} className="bg-primary text-white px-4 py-2 rounded-lg font-bold">Add Record</button>
               </div>
-
               <div className="overflow-x-auto">
                 <table className="w-full text-left">
-                  <thead>
-                    <tr className="bg-slate-50 border-b text-slate-400 text-xs font-bold uppercase tracking-wider">
-                      <th className="px-6 py-4">Body Part</th>
-                      <th className="px-6 py-4">Scan Type</th>
-                      <th className="px-6 py-4">Category</th>
-                      <th className="px-6 py-4 text-right">Actions</th>
-                    </tr>
-                  </thead>
                   <tbody className="divide-y">
                     {filteredRecords.map((part) => (
-                      <tr key={part.id} className="hover:bg-slate-50/50 transition-colors">
+                      <tr key={part.id}>
                         <td className="px-6 py-4 font-bold text-secondary">{part.name}</td>
-                        <td className="px-6 py-4">
-                          <span className="px-3 py-1 bg-accent text-primary text-xs font-bold rounded-full border border-primary/10">
-                            {scanTypes.find(t => t.id === part.scanTypeId)?.name}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-slate-500 text-sm">{part.category}</td>
+                        <td className="px-6 py-4 text-slate-500">{part.category}</td>
                         <td className="px-6 py-4 text-right">
                           <div className="flex justify-end gap-2">
-                            <button
-                              onClick={() => handleOpenModal(part)}
-                              className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-primary transition-all"
-                            >
-                              <Edit2 className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={() => setRecords(records.filter(r => r.id !== part.id))}
-                              className="p-2 hover:bg-red-50 rounded-lg text-slate-400 hover:text-red-500"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
+                            <button onClick={() => handleOpenModal(part)} className="p-2 hover:bg-slate-100 rounded-lg"><Edit2 className="h-4 w-4" /></button>
+                            <button onClick={() => deleteRecord(part.id)} className="p-2 hover:bg-red-50 text-red-500 rounded-lg"><Trash2 className="h-4 w-4" /></button>
                           </div>
                         </td>
                       </tr>
@@ -545,19 +498,6 @@ export default function AdminPage() {
                   <option value="">Choose a procedure...</option>
                   {records.map(r => (
                     <option key={r.id} value={r.id}>{r.name} - ${r.price}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-secondary mb-1">Branch</label>
-                <select
-                  required
-                  className="w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-primary/20 outline-none"
-                  value={posData.branchId}
-                  onChange={(e) => setPosData({ ...posData, branchId: e.target.value })}
-                >
-                  {branches.map(b => (
-                    <option key={b.id} value={b.id}>{b.name}</option>
                   ))}
                 </select>
               </div>
@@ -617,17 +557,6 @@ export default function AdminPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-secondary mb-1">Category</label>
-                  <input
-                    type="text"
-                    className="w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-primary/20 outline-none"
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
                   <label className="block text-sm font-bold text-secondary mb-1">Base Price ($)</label>
                   <input
                     required
@@ -637,40 +566,10 @@ export default function AdminPage() {
                     onChange={(e) => setFormData({ ...formData, price: parseInt(e.target.value) || 0 })}
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-bold text-secondary mb-1">Duration</label>
-                  <input
-                    type="text"
-                    className="w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-primary/20 outline-none"
-                    value={formData.duration}
-                    onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-secondary mb-1">Preparation Instructions</label>
-                <textarea
-                  rows={2}
-                  className="w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-primary/20 outline-none resize-none"
-                  value={formData.preparation}
-                  onChange={(e) => setFormData({ ...formData, preparation: e.target.value })}
-                />
               </div>
               <div className="pt-4 flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="flex-1 px-4 py-2 rounded-lg border font-bold text-secondary hover:bg-slate-50 transition-all"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-4 py-2 rounded-lg bg-primary text-white font-bold hover:bg-primary/90 flex items-center justify-center gap-2 transition-all shadow-lg shadow-primary/20"
-                >
-                  <Save className="h-4 w-4" />
-                  Save Record
-                </button>
+                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 px-4 py-2 border rounded-lg font-bold">Cancel</button>
+                <button type="submit" className="flex-1 px-4 py-2 bg-primary text-white rounded-lg font-bold">Save</button>
               </div>
             </form>
           </div>

@@ -22,7 +22,7 @@ export default function Navbar() {
             <Link href="/branches" className="text-secondary hover:text-primary transition-colors font-medium">
               Branches
             </Link>
-            <Link href="/admin" className="text-secondary hover:text-primary transition-colors font-medium">
+            <Link href="/login" className="text-secondary hover:text-primary transition-colors font-medium">
               Admin
             </Link>
           </div>

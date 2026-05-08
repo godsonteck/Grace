@@ -2,25 +2,18 @@
 
 import { useState, useMemo, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { scanTypes, bodyParts as initialBodyParts, BodyPart } from "@/lib/data";
+import { scanTypes, BodyPart } from "@/lib/data";
+import { useData } from "@/context/DataContext";
 import { Search, ChevronRight, Clock, Info, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 function ScansContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { records } = useData();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [activePart, setActivePart] = useState<BodyPart | null>(null);
-  const [records, setRecords] = useState<BodyPart[]>(initialBodyParts);
-
-  // Load records from localStorage to ensure sync with Admin changes
-  useEffect(() => {
-    const savedRecords = localStorage.getItem("grace_records");
-    if (savedRecords) {
-      setRecords(JSON.parse(savedRecords));
-    }
-  }, []);
 
   useEffect(() => {
     const type = searchParams.get("type");
@@ -39,7 +32,7 @@ function ScansContent() {
   }, [searchTerm, selectedType, records]);
 
   const groupedParts = useMemo(() => {
-    const groups: Record<string, typeof records> = {};
+    const groups: Record<string, BodyPart[]> = {};
     filteredBodyParts.forEach((part) => {
       if (!groups[part.scanTypeId]) {
         groups[part.scanTypeId] = [];
