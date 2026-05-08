@@ -28,11 +28,21 @@ interface DataContextType {
   payInvoice: (id: string) => void;
   addStaff: (member: Staff) => void;
   updateStaff: (member: Staff) => void;
+  deleteStaff: (id: string) => void;
+  addEquipment: (item: Equipment) => void;
   updateEquipment: (item: Equipment) => void;
+  deleteEquipment: (id: string) => void;
+  addPatient: (patient: Patient) => void;
+  updatePatient: (patient: Patient) => void;
   syncData: () => Promise<void>;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
+
+const initialPatients: Patient[] = [
+  { id: "pat-1", name: "Kwame Antwi", email: "kwame@example.com", phone: "+233 24 123 4567", dob: "1985-05-12", gender: "Male", bloodGroup: "O+", history: [] },
+  { id: "pat-2", name: "Ama Serwaa", email: "ama@example.com", phone: "+233 24 987 6543", dob: "1992-08-24", gender: "Female", bloodGroup: "A-", history: [] },
+];
 
 export function DataProvider({ children }: { children: React.ReactNode }) {
   const [records, setRecords] = useState<BodyPart[]>(initialBodyParts);
@@ -41,7 +51,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const [staff, setStaff] = useState<Staff[]>(initialStaff);
   const [equipment, setEquipment] = useState<Equipment[]>(initialEquipment);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
-  const [patients, setPatients] = useState<Patient[]>([]);
+  const [patients, setPatients] = useState<Patient[]>(initialPatients);
 
   const [isOnline, setIsOnline] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -50,6 +60,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   // Initialize data from localStorage
   useEffect(() => {
     const load = (key: string, def: any) => {
+      if (typeof window === 'undefined') return def;
       const val = localStorage.getItem(key);
       return val ? JSON.parse(val) : def;
     };
@@ -60,7 +71,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     setStaff(load('grace_staff', initialStaff));
     setEquipment(load('grace_equipment', initialEquipment));
     setAuditLogs(load('grace_audit_logs', []));
-    setPatients(load('grace_patients', []));
+    setPatients(load('grace_patients', initialPatients));
     setSyncQueue(load('grace_sync_queue', []));
 
     const handleOnline = () => setIsOnline(true);
@@ -172,16 +183,42 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     logAction(`Updated staff profile: ${member.name}`, "Human Resources");
   };
 
+  const deleteStaff = (id: string) => {
+    setStaff(p => p.filter(s => s.id !== id));
+    logAction(`Terminated staff session: ${id}`, "Human Resources");
+  };
+
+  const addEquipment = (item: Equipment) => {
+    setEquipment(p => [item, ...p]);
+    logAction(`New asset registered: ${item.name}`, "Assets");
+  };
+
   const updateEquipment = (item: Equipment) => {
     setEquipment(p => p.map(e => e.id === item.id ? item : e));
     logAction(`Updated equipment status: ${item.name}`, "Assets");
+  };
+
+  const deleteEquipment = (id: string) => {
+    setEquipment(p => p.filter(e => e.id !== id));
+    logAction(`Decommissioned asset: ${id}`, "Assets");
+  };
+
+  const addPatient = (patient: Patient) => {
+    setPatients(p => [patient, ...p]);
+    logAction(`Enrolled new patient: ${patient.name}`, "Clinical");
+  };
+
+  const updatePatient = (patient: Patient) => {
+    setPatients(p => p.map(pt => pt.id === patient.id ? patient : pt));
+    logAction(`Updated medical record: ${patient.name}`, "Clinical");
   };
 
   return (
     <DataContext.Provider value={{
       records, appointments, invoices, staff, equipment, auditLogs, patients, isOnline, isSyncing,
       addRecord, updateRecord, deleteRecord, addAppointment, updateAppointment, attachReport,
-      addInvoice, payInvoice, addStaff, updateStaff, updateEquipment, syncData
+      addInvoice, payInvoice, addStaff, updateStaff, deleteStaff, addEquipment, updateEquipment, deleteEquipment,
+      addPatient, updatePatient, syncData
     }}>
       {children}
     </DataContext.Provider>
