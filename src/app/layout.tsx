@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
 import { DataProvider } from "@/context/DataContext";
+import ConditionalLayout from "@/components/ConditionalLayout";
 
 export const metadata: Metadata = {
   title: "Grace Diagnostic Center",
@@ -18,11 +17,9 @@ export default function RootLayout({
     <html lang="en">
       <body className="antialiased min-h-screen flex flex-col">
         <DataProvider>
-          <Navbar />
-          <main className="flex-grow">
+          <ConditionalLayout>
             {children}
-          </main>
-          <Footer />
+          </ConditionalLayout>
         </DataProvider>
       </body>
     </html>
