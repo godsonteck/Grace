@@ -1,15 +1,23 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { scanTypes, bodyParts as initialBodyParts, BodyPart } from "@/lib/data";
-import { LayoutDashboard, Plus, Search, Edit2, Trash2, DollarSign, Settings, Users, X, Save } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { scanTypes, bodyParts as initialBodyParts, BodyPart, branches } from "@/lib/data";
+import {
+  LayoutDashboard, Plus, Search, Edit2, Trash2, DollarSign,
+  Settings, Users, X, Save, Calendar, CheckCircle, Clock, AlertCircle
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("All");
+
+  // Data State
   const [records, setRecords] = useState<BodyPart[]>(initialBodyParts);
+  const [appointments, setAppointments] = useState<any[]>([]);
+
+  // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<BodyPart | null>(null);
 
@@ -19,7 +27,36 @@ export default function AdminPage() {
     scanTypeId: "ct-scan",
     category: "General",
     price: 0,
+    duration: "20 mins",
+    preparation: "No special preparation.",
   });
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    const savedRecords = localStorage.getItem("grace_records");
+    if (savedRecords) {
+      setRecords(JSON.parse(savedRecords));
+    } else {
+      localStorage.setItem("grace_records", JSON.stringify(initialBodyParts));
+    }
+
+    const savedApts = localStorage.getItem("grace_appointments");
+    if (savedApts) {
+      setAppointments(JSON.parse(savedApts));
+    }
+  }, []);
+
+  // Sync records to localStorage
+  useEffect(() => {
+    if (records !== initialBodyParts) {
+      localStorage.setItem("grace_records", JSON.stringify(records));
+    }
+  }, [records]);
+
+  // Sync appointments to localStorage
+  useEffect(() => {
+    localStorage.setItem("grace_appointments", JSON.stringify(appointments));
+  }, [appointments]);
 
   const filteredRecords = useMemo(() => {
     return records.filter(part => {
@@ -34,11 +71,13 @@ export default function AdminPage() {
     return {
       totalScans: records.length,
       totalValue: records.reduce((acc, curr) => acc + (curr.price || 0), 0),
+      pendingAppointments: appointments.filter(a => a.status === "pending").length,
+      totalAppointments: appointments.length,
       ctCount: records.filter(r => r.scanTypeId === "ct-scan").length,
       xrayCount: records.filter(r => r.scanTypeId === "xray-scan").length,
       usCount: records.filter(r => r.scanTypeId === "ultrasound-scan").length,
     };
-  }, [records]);
+  }, [records, appointments]);
 
   const handleOpenModal = (record?: BodyPart) => {
     if (record) {
@@ -48,6 +87,8 @@ export default function AdminPage() {
         scanTypeId: record.scanTypeId,
         category: record.category,
         price: record.price || 0,
+        duration: record.duration || "20 mins",
+        preparation: record.preparation || "No special preparation.",
       });
     } else {
       setEditingRecord(null);
@@ -56,6 +97,8 @@ export default function AdminPage() {
         scanTypeId: "ct-scan",
         category: "General",
         price: 0,
+        duration: "20 mins",
+        preparation: "No special preparation.",
       });
     }
     setIsModalOpen(true);
@@ -81,10 +124,14 @@ export default function AdminPage() {
     }
   };
 
+  const handleUpdateAptStatus = (id: string, status: string) => {
+    setAppointments(appointments.map(a => a.id === id ? { ...a, status } : a));
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 flex">
       {/* Sidebar */}
-      <aside className="w-64 bg-secondary text-white hidden md:flex flex-col">
+      <aside className="w-64 bg-secondary text-white hidden md:flex flex-col sticky top-0 h-screen">
         <div className="p-6 border-b border-slate-700">
           <h2 className="text-xl font-bold flex items-center gap-2">
             <LayoutDashboard className="h-6 w-6 text-primary" />
@@ -94,6 +141,7 @@ export default function AdminPage() {
         <nav className="flex-grow p-4 space-y-2">
           {[
             { id: "dashboard", name: "Dashboard", icon: LayoutDashboard },
+            { id: "appointments", name: "Appointments", icon: Calendar, badge: stats.pendingAppointments },
             { id: "body-parts", name: "Body Parts & Scans", icon: Settings },
             { id: "prices", name: "Price Management", icon: DollarSign },
             { id: "staff", name: "Staff Directory", icon: Users },
@@ -102,12 +150,19 @@ export default function AdminPage() {
               key={item.id}
               onClick={() => setActiveTab(item.id)}
               className={cn(
-                "w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
+                "w-full flex items-center justify-between px-4 py-3 rounded-lg transition-colors",
                 activeTab === item.id ? "bg-primary text-white" : "text-slate-400 hover:text-white hover:bg-slate-800"
               )}
             >
-              <item.icon className="h-5 w-5" />
-              {item.name}
+              <div className="flex items-center gap-3">
+                <item.icon className="h-5 w-5" />
+                {item.name}
+              </div>
+              {item.badge !== undefined && item.badge > 0 && (
+                <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                  {item.badge}
+                </span>
+              )}
             </button>
           ))}
         </nav>
@@ -124,9 +179,10 @@ export default function AdminPage() {
 
       {/* Main Content */}
       <main className="flex-grow">
-        <header className="bg-white border-b px-8 py-6 flex justify-between items-center">
+        <header className="bg-white border-b px-8 py-6 flex justify-between items-center sticky top-0 z-10">
           <h1 className="text-2xl font-bold text-secondary">
             {activeTab === "dashboard" ? "Admin Dashboard" :
+             activeTab === "appointments" ? "Appointment Requests" :
              activeTab === "body-parts" ? "Manage Body Parts & Scans" :
              activeTab === "prices" ? "Pricing Management" : "Admin Panel"}
           </h1>
@@ -144,10 +200,10 @@ export default function AdminPage() {
             <div className="space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {[
-                  { label: "Total Scan Types", value: stats.totalScans, icon: Settings, color: "bg-blue-500" },
+                  { label: "New Requests", value: stats.pendingAppointments, icon: Calendar, color: "bg-orange-500" },
+                  { label: "Total Scans", value: stats.totalScans, icon: Settings, color: "bg-blue-500" },
                   { label: "Avg. Scan Price", value: `$${Math.round(stats.totalValue / stats.totalScans)}`, icon: DollarSign, color: "bg-green-500" },
                   { label: "Active Branches", value: "3", icon: Users, color: "bg-purple-500" },
-                  { label: "Staff Members", value: "24", icon: Users, color: "bg-orange-500" },
                 ].map((stat, i) => (
                   <div key={i} className="bg-white p-6 rounded-2xl border shadow-sm flex items-center gap-4">
                     <div className={cn("p-3 rounded-xl text-white", stat.color)}>
@@ -185,19 +241,121 @@ export default function AdminPage() {
                     ))}
                   </div>
                 </div>
-                <div className="bg-white p-8 rounded-2xl border shadow-sm flex flex-col items-center justify-center text-center">
-                  <div className="w-16 h-16 bg-accent rounded-full flex items-center justify-center mb-4">
-                    <LayoutDashboard className="h-8 w-8 text-primary" />
-                  </div>
-                  <h3 className="text-lg font-bold text-secondary mb-2">System Status</h3>
-                  <p className="text-slate-500 text-sm mb-6">All systems are operational across all 3 branches.</p>
-                  <div className="flex gap-2">
-                    <span className="flex items-center gap-1.5 text-xs font-bold text-green-600 bg-green-50 px-3 py-1 rounded-full border border-green-100">
-                      <div className="w-1.5 h-1.5 rounded-full bg-green-600 animate-pulse" />
-                      Live
-                    </span>
+                <div className="bg-white p-8 rounded-2xl border shadow-sm">
+                  <h3 className="text-lg font-bold text-secondary mb-6">Recent Activity</h3>
+                  <div className="space-y-4">
+                    {appointments.slice(0, 4).map((apt, i) => (
+                      <div key={i} className="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 transition-all border border-transparent hover:border-slate-100">
+                        <div className={cn(
+                          "w-10 h-10 rounded-full flex items-center justify-center shrink-0",
+                          apt.status === "pending" ? "bg-orange-100 text-orange-600" : "bg-green-100 text-green-600"
+                        )}>
+                          {apt.status === "pending" ? <Clock className="h-5 w-5" /> : <CheckCircle className="h-5 w-5" />}
+                        </div>
+                        <div className="flex-grow min-w-0">
+                          <p className="font-bold text-secondary truncate">{apt.patientName}</p>
+                          <p className="text-xs text-muted truncate">{apt.scanName} • {apt.date}</p>
+                        </div>
+                        <span className={cn(
+                          "text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full",
+                          apt.status === "pending" ? "bg-orange-50 text-orange-700" : "bg-green-50 text-green-700"
+                        )}>
+                          {apt.status}
+                        </span>
+                      </div>
+                    ))}
+                    {appointments.length === 0 && (
+                      <p className="text-center text-muted italic py-8">No recent appointments.</p>
+                    )}
                   </div>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === "appointments" && (
+            <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="bg-slate-50 border-b text-slate-400 text-xs font-bold uppercase tracking-wider">
+                      <th className="px-6 py-4">Patient</th>
+                      <th className="px-6 py-4">Scan & Branch</th>
+                      <th className="px-6 py-4">Date & Time</th>
+                      <th className="px-6 py-4">Status</th>
+                      <th className="px-6 py-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {appointments.map((apt) => (
+                      <tr key={apt.id} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="font-bold text-secondary">{apt.patientName}</div>
+                          <div className="text-xs text-slate-400">{apt.patientPhone}</div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm font-medium text-secondary">{apt.scanName}</div>
+                          <div className="text-xs text-slate-400">
+                            {branches.find(b => b.id === apt.branchId)?.name || "Main Branch"}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-secondary font-medium">{apt.date}</div>
+                          <div className="text-xs text-slate-400 capitalize">{apt.time} slot</div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={cn(
+                            "px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full",
+                            apt.status === "pending" ? "bg-orange-100 text-orange-700" :
+                            apt.status === "confirmed" ? "bg-blue-100 text-blue-700" :
+                            apt.status === "completed" ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-700"
+                          )}>
+                            {apt.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex justify-end gap-2">
+                            {apt.status === "pending" && (
+                              <button
+                                onClick={() => handleUpdateAptStatus(apt.id, "confirmed")}
+                                className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all"
+                                title="Confirm Appointment"
+                              >
+                                <CheckCircle className="h-4 w-4" />
+                              </button>
+                            )}
+                            {apt.status === "confirmed" && (
+                              <button
+                                onClick={() => handleUpdateAptStatus(apt.id, "completed")}
+                                className="p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-all"
+                                title="Mark as Completed"
+                              >
+                                <CheckCircle className="h-4 w-4" />
+                              </button>
+                            )}
+                            <button
+                              onClick={() => {
+                                if(confirm("Delete this appointment?")) {
+                                  setAppointments(appointments.filter(a => a.id !== apt.id))
+                                }
+                              }}
+                              className="p-2 hover:bg-red-50 rounded-lg text-slate-400 hover:text-red-500 transition-all"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {appointments.length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="px-6 py-20 text-center text-slate-400 italic">
+                          No appointment requests found.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}
@@ -381,14 +539,34 @@ export default function AdminPage() {
                   />
                 </div>
               </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-bold text-secondary mb-1">Base Price ($)</label>
+                  <input
+                    required
+                    type="number"
+                    className="w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-primary/20 outline-none"
+                    value={formData.price}
+                    onChange={(e) => setFormData({ ...formData, price: parseInt(e.target.value) || 0 })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-secondary mb-1">Duration</label>
+                  <input
+                    type="text"
+                    className="w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-primary/20 outline-none"
+                    value={formData.duration}
+                    onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                  />
+                </div>
+              </div>
               <div>
-                <label className="block text-sm font-bold text-secondary mb-1">Base Price ($)</label>
-                <input
-                  required
-                  type="number"
-                  className="w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-primary/20 outline-none"
-                  value={formData.price}
-                  onChange={(e) => setFormData({ ...formData, price: parseInt(e.target.value) || 0 })}
+                <label className="block text-sm font-bold text-secondary mb-1">Preparation Instructions</label>
+                <textarea
+                  rows={2}
+                  className="w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-primary/20 outline-none resize-none"
+                  value={formData.preparation}
+                  onChange={(e) => setFormData({ ...formData, preparation: e.target.value })}
                 />
               </div>
               <div className="pt-4 flex gap-3">

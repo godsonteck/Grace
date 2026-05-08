@@ -26,6 +26,11 @@ export default function Navbar() {
               Admin
             </Link>
           </div>
+          <div className="hidden md:block">
+            <Link href="/book" className="bg-primary text-white px-6 py-2 rounded-full font-bold hover:bg-primary/90 transition-all shadow-md shadow-primary/20 text-sm">
+              Book Appointment
+            </Link>
+          </div>
           <div className="md:hidden">
             {/* Mobile menu button would go here */}
           </div>
