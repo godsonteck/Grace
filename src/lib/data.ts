@@ -44,27 +44,44 @@ export interface Appointment {
   notes?: string;
 }
 
+export interface Invoice {
+  id: string;
+  patientName: string;
+  scanName: string;
+  amount: number;
+  date: string;
+  status: "paid" | "unpaid";
+  branchName: string;
+}
+
 export const branches: Branch[] = [
   {
-    id: "main-branch",
-    name: "Grace Diagnostic Center - Main Branch",
-    address: "123 Medical Plaza, Downtown City",
-    phone: "+1 (555) 123-4567",
-    email: "info@gracediagnostic.com",
+    id: "ho-branch",
+    name: "Grace Diagnostic Center - Ho",
+    address: "Ho Medical Road, Volta Region",
+    phone: "+233 24 000 1111",
+    email: "ho@gracediagnostic.com",
   },
   {
-    id: "north-branch",
-    name: "Grace Diagnostic Center - North Side",
-    address: "456 Healthcare Ave, North District",
-    phone: "+1 (555) 987-6543",
-    email: "north@gracediagnostic.com",
+    id: "achimota-branch",
+    name: "Grace Diagnostic Center - Achimota",
+    address: "Achimota Retail Centre Plaza, Accra",
+    phone: "+233 24 000 2222",
+    email: "achimota@gracediagnostic.com",
   },
   {
-    id: "east-branch",
-    name: "Grace Diagnostic Center - East Wing",
-    address: "789 Wellness Rd, East Valley",
-    phone: "+1 (555) 456-7890",
-    email: "east@gracediagnostic.com",
+    id: "koforidua-branch",
+    name: "Grace Diagnostic Center - Koforidua",
+    address: "Koforidua High St, Eastern Region",
+    phone: "+233 24 000 3333",
+    email: "koforidua@gracediagnostic.com",
+  },
+  {
+    id: "tema-branch",
+    name: "Grace Diagnostic Center - Tema",
+    address: "Tema Community 1, Harbour City",
+    phone: "+233 24 000 4444",
+    email: "tema@gracediagnostic.com",
   },
 ];
 

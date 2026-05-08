@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { scanTypes, bodyParts as initialBodyParts, BodyPart, branches } from "@/lib/data";
+import { scanTypes, bodyParts as initialBodyParts, BodyPart, branches, Invoice } from "@/lib/data";
 import {
   LayoutDashboard, Plus, Search, Edit2, Trash2, DollarSign,
-  Settings, Users, X, Save, Calendar, CheckCircle, Clock, AlertCircle
+  Settings, Users, X, Save, Calendar, CheckCircle, Clock,
+  Printer, CreditCard, ShoppingCart, ArrowRight
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -16,12 +17,14 @@ export default function AdminPage() {
   // Data State
   const [records, setRecords] = useState<BodyPart[]>(initialBodyParts);
   const [appointments, setAppointments] = useState<any[]>([]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isPosModalOpen, setIsPosModalOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<BodyPart | null>(null);
 
-  // Form State
+  // Form States
   const [formData, setFormData] = useState({
     name: "",
     scanTypeId: "ct-scan",
@@ -31,32 +34,36 @@ export default function AdminPage() {
     preparation: "No special preparation.",
   });
 
+  const [posData, setPosData] = useState({
+    patientName: "",
+    scanId: "",
+    branchId: branches[0].id,
+  });
+
   // Load from localStorage on mount
   useEffect(() => {
     const savedRecords = localStorage.getItem("grace_records");
-    if (savedRecords) {
-      setRecords(JSON.parse(savedRecords));
-    } else {
-      localStorage.setItem("grace_records", JSON.stringify(initialBodyParts));
-    }
+    if (savedRecords) setRecords(JSON.parse(savedRecords));
 
     const savedApts = localStorage.getItem("grace_appointments");
-    if (savedApts) {
-      setAppointments(JSON.parse(savedApts));
-    }
+    if (savedApts) setAppointments(JSON.parse(savedApts));
+
+    const savedInvoices = localStorage.getItem("grace_invoices");
+    if (savedInvoices) setInvoices(JSON.parse(savedInvoices));
   }, []);
 
-  // Sync records to localStorage
+  // Sync to localStorage
   useEffect(() => {
-    if (records !== initialBodyParts) {
-      localStorage.setItem("grace_records", JSON.stringify(records));
-    }
+    localStorage.setItem("grace_records", JSON.stringify(records));
   }, [records]);
 
-  // Sync appointments to localStorage
   useEffect(() => {
     localStorage.setItem("grace_appointments", JSON.stringify(appointments));
   }, [appointments]);
+
+  useEffect(() => {
+    localStorage.setItem("grace_invoices", JSON.stringify(invoices));
+  }, [invoices]);
 
   const filteredRecords = useMemo(() => {
     return records.filter(part => {
@@ -72,12 +79,12 @@ export default function AdminPage() {
       totalScans: records.length,
       totalValue: records.reduce((acc, curr) => acc + (curr.price || 0), 0),
       pendingAppointments: appointments.filter(a => a.status === "pending").length,
-      totalAppointments: appointments.length,
+      totalRevenue: invoices.filter(i => i.status === "paid").reduce((acc, curr) => acc + curr.amount, 0),
       ctCount: records.filter(r => r.scanTypeId === "ct-scan").length,
       xrayCount: records.filter(r => r.scanTypeId === "xray-scan").length,
       usCount: records.filter(r => r.scanTypeId === "ultrasound-scan").length,
     };
-  }, [records, appointments]);
+  }, [records, appointments, invoices]);
 
   const handleOpenModal = (record?: BodyPart) => {
     if (record) {
@@ -118,14 +125,31 @@ export default function AdminPage() {
     setIsModalOpen(false);
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm("Are you sure you want to delete this record?")) {
-      setRecords(records.filter(r => r.id !== id));
-    }
+  const handleCreateInvoice = (e: React.FormEvent) => {
+    e.preventDefault();
+    const scan = records.find(r => r.id === posData.scanId);
+    const branch = branches.find(b => b.id === posData.branchId);
+
+    if (!scan || !branch) return;
+
+    const newInvoice: Invoice = {
+      id: `INV-${Date.now()}`,
+      patientName: posData.patientName,
+      scanName: scan.name,
+      amount: scan.price || 0,
+      date: new Date().toLocaleDateString(),
+      status: "unpaid",
+      branchName: branch.name,
+    };
+
+    setInvoices([newInvoice, ...invoices]);
+    setIsPosModalOpen(false);
+    setPosData({ patientName: "", scanId: "", branchId: branches[0].id });
+    setActiveTab("pos");
   };
 
-  const handleUpdateAptStatus = (id: string, status: string) => {
-    setAppointments(appointments.map(a => a.id === id ? { ...a, status } : a));
+  const handlePayInvoice = (id: string) => {
+    setInvoices(invoices.map(inv => inv.id === id ? { ...inv, status: "paid" } : inv));
   };
 
   return (
@@ -141,6 +165,7 @@ export default function AdminPage() {
         <nav className="flex-grow p-4 space-y-2">
           {[
             { id: "dashboard", name: "Dashboard", icon: LayoutDashboard },
+            { id: "pos", name: "POS & Billing", icon: CreditCard },
             { id: "appointments", name: "Appointments", icon: Calendar, badge: stats.pendingAppointments },
             { id: "body-parts", name: "Body Parts & Scans", icon: Settings },
             { id: "prices", name: "Price Management", icon: DollarSign },
@@ -178,21 +203,30 @@ export default function AdminPage() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-grow">
+      <main className="flex-grow min-w-0">
         <header className="bg-white border-b px-8 py-6 flex justify-between items-center sticky top-0 z-10">
           <h1 className="text-2xl font-bold text-secondary">
             {activeTab === "dashboard" ? "Admin Dashboard" :
+             activeTab === "pos" ? "Point of Sale" :
              activeTab === "appointments" ? "Appointment Requests" :
-             activeTab === "body-parts" ? "Manage Body Parts & Scans" :
-             activeTab === "prices" ? "Pricing Management" : "Admin Panel"}
+             activeTab === "body-parts" ? "Manage Body Parts & Scans" : "Admin Panel"}
           </h1>
-          <button
-            onClick={() => handleOpenModal()}
-            className="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all"
-          >
-            <Plus className="h-5 w-5" />
-            Add New Record
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setIsPosModalOpen(true)}
+              className="bg-secondary text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-slate-800 transition-all"
+            >
+              <ShoppingCart className="h-5 w-5 text-primary" />
+              New Sale
+            </button>
+            <button
+              onClick={() => handleOpenModal()}
+              className="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all"
+            >
+              <Plus className="h-5 w-5" />
+              Add Record
+            </button>
+          </div>
         </header>
 
         <div className="p-8">
@@ -200,10 +234,10 @@ export default function AdminPage() {
             <div className="space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {[
+                  { label: "Today's Revenue", value: `$${stats.totalRevenue}`, icon: CreditCard, color: "bg-green-500" },
                   { label: "New Requests", value: stats.pendingAppointments, icon: Calendar, color: "bg-orange-500" },
-                  { label: "Total Scans", value: stats.totalScans, icon: Settings, color: "bg-blue-500" },
-                  { label: "Avg. Scan Price", value: `$${Math.round(stats.totalValue / stats.totalScans)}`, icon: DollarSign, color: "bg-green-500" },
-                  { label: "Active Branches", value: "3", icon: Users, color: "bg-purple-500" },
+                  { label: "Inventory Items", value: stats.totalScans, icon: Settings, color: "bg-blue-500" },
+                  { label: "Avg. Price", value: `$${Math.round(stats.totalValue / stats.totalScans)}`, icon: DollarSign, color: "bg-purple-500" },
                 ].map((stat, i) => (
                   <div key={i} className="bg-white p-6 rounded-2xl border shadow-sm flex items-center gap-4">
                     <div className={cn("p-3 rounded-xl text-white", stat.color)}>
@@ -219,56 +253,123 @@ export default function AdminPage() {
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div className="bg-white p-8 rounded-2xl border shadow-sm">
-                  <h3 className="text-lg font-bold text-secondary mb-6">Inventory Distribution</h3>
+                  <h3 className="text-lg font-bold text-secondary mb-6">Recent Sales</h3>
                   <div className="space-y-4">
-                    {[
-                      { label: "CT Scans", count: stats.ctCount, total: stats.totalScans, color: "bg-primary" },
-                      { label: "X-Rays", count: stats.xrayCount, total: stats.totalScans, color: "bg-blue-400" },
-                      { label: "Ultrasounds", count: stats.usCount, total: stats.totalScans, color: "bg-teal-400" },
-                    ].map((item, i) => (
-                      <div key={i} className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span className="font-bold text-secondary">{item.label}</span>
-                          <span className="text-slate-500">{item.count} items</span>
+                    {invoices.slice(0, 5).map((inv) => (
+                      <div key={inv.id} className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-all border border-transparent hover:border-slate-100">
+                        <div className="flex items-center gap-4">
+                          <div className={cn("p-2 rounded-lg", inv.status === "paid" ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600")}>
+                            <DollarSign className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <p className="font-bold text-secondary text-sm">{inv.patientName}</p>
+                            <p className="text-[10px] text-muted">{inv.scanName} • {inv.date}</p>
+                          </div>
                         </div>
-                        <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                          <div
-                            className={cn("h-full rounded-full", item.color)}
-                            style={{ width: `${(item.count / item.total) * 100}%` }}
-                          />
+                        <div className="text-right">
+                          <p className="font-bold text-secondary text-sm">${inv.amount}</p>
+                          <span className={cn("text-[8px] font-bold uppercase", inv.status === "paid" ? "text-green-600" : "text-red-600")}>{inv.status}</span>
                         </div>
                       </div>
                     ))}
+                    {invoices.length === 0 && <p className="text-center text-muted italic py-4">No recent sales.</p>}
                   </div>
                 </div>
                 <div className="bg-white p-8 rounded-2xl border shadow-sm">
-                  <h3 className="text-lg font-bold text-secondary mb-6">Recent Activity</h3>
-                  <div className="space-y-4">
-                    {appointments.slice(0, 4).map((apt, i) => (
-                      <div key={i} className="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 transition-all border border-transparent hover:border-slate-100">
-                        <div className={cn(
-                          "w-10 h-10 rounded-full flex items-center justify-center shrink-0",
-                          apt.status === "pending" ? "bg-orange-100 text-orange-600" : "bg-green-100 text-green-600"
-                        )}>
-                          {apt.status === "pending" ? <Clock className="h-5 w-5" /> : <CheckCircle className="h-5 w-5" />}
-                        </div>
-                        <div className="flex-grow min-w-0">
-                          <p className="font-bold text-secondary truncate">{apt.patientName}</p>
-                          <p className="text-xs text-muted truncate">{apt.scanName} • {apt.date}</p>
-                        </div>
-                        <span className={cn(
-                          "text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full",
-                          apt.status === "pending" ? "bg-orange-50 text-orange-700" : "bg-green-50 text-green-700"
-                        )}>
-                          {apt.status}
-                        </span>
+                  <h3 className="text-lg font-bold text-secondary mb-6">Inventory Summary</h3>
+                  <div className="grid grid-cols-3 gap-4">
+                    {[
+                      { label: "CT", count: stats.ctCount, color: "text-primary" },
+                      { label: "X-Ray", count: stats.xrayCount, color: "text-blue-500" },
+                      { label: "U/S", count: stats.usCount, color: "text-teal-500" },
+                    ].map((item, i) => (
+                      <div key={i} className="text-center p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                        <p className={cn("text-2xl font-black", item.color)}>{item.count}</p>
+                        <p className="text-xs text-slate-500 font-bold uppercase mt-1">{item.label}</p>
                       </div>
                     ))}
-                    {appointments.length === 0 && (
-                      <p className="text-center text-muted italic py-8">No recent appointments.</p>
-                    )}
                   </div>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === "pos" && (
+            <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
+              <div className="p-6 border-b flex justify-between items-center">
+                <div className="relative w-96">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Search invoices..."
+                    className="w-full pl-10 pr-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+                <div className="text-sm font-bold text-secondary">
+                  Total Revenue: <span className="text-green-600 text-lg">${stats.totalRevenue}</span>
+                </div>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="bg-slate-50 border-b text-slate-400 text-xs font-bold uppercase tracking-wider">
+                      <th className="px-6 py-4">Invoice #</th>
+                      <th className="px-6 py-4">Patient & Scan</th>
+                      <th className="px-6 py-4">Branch</th>
+                      <th className="px-6 py-4">Amount</th>
+                      <th className="px-6 py-4">Status</th>
+                      <th className="px-6 py-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {invoices.map((inv) => (
+                      <tr key={inv.id} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="px-6 py-4 font-mono text-xs text-slate-500">{inv.id}</td>
+                        <td className="px-6 py-4">
+                          <div className="font-bold text-secondary">{inv.patientName}</div>
+                          <div className="text-xs text-slate-400">{inv.scanName}</div>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-slate-500">{inv.branchName}</td>
+                        <td className="px-6 py-4 font-bold text-secondary">${inv.amount}</td>
+                        <td className="px-6 py-4">
+                          <span className={cn(
+                            "px-3 py-1 text-[10px] font-bold uppercase rounded-full",
+                            inv.status === "paid" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                          )}>
+                            {inv.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex justify-end gap-2">
+                            {inv.status === "unpaid" && (
+                              <button
+                                onClick={() => handlePayInvoice(inv.id)}
+                                className="p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-all"
+                                title="Process Payment"
+                              >
+                                <CreditCard className="h-4 w-4" />
+                              </button>
+                            )}
+                            <button className="p-2 hover:bg-slate-100 rounded-lg text-slate-400" title="Print Receipt">
+                              <Printer className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => setInvoices(invoices.filter(i => i.id !== inv.id))}
+                              className="p-2 hover:bg-red-50 rounded-lg text-slate-400 hover:text-red-500"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {invoices.length === 0 && (
+                      <tr><td colSpan={6} className="px-6 py-20 text-center text-slate-400 italic">No invoices found.</td></tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}
@@ -296,7 +397,7 @@ export default function AdminPage() {
                         <td className="px-6 py-4">
                           <div className="text-sm font-medium text-secondary">{apt.scanName}</div>
                           <div className="text-xs text-slate-400">
-                            {branches.find(b => b.id === apt.branchId)?.name || "Main Branch"}
+                            {branches.find(b => b.id === apt.branchId)?.name || "Ho Branch"}
                           </div>
                         </td>
                         <td className="px-6 py-4">
@@ -317,29 +418,15 @@ export default function AdminPage() {
                           <div className="flex justify-end gap-2">
                             {apt.status === "pending" && (
                               <button
-                                onClick={() => handleUpdateAptStatus(apt.id, "confirmed")}
+                                onClick={() => setAppointments(appointments.map(a => a.id === apt.id ? { ...a, status: "confirmed" } : a))}
                                 className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all"
-                                title="Confirm Appointment"
-                              >
-                                <CheckCircle className="h-4 w-4" />
-                              </button>
-                            )}
-                            {apt.status === "confirmed" && (
-                              <button
-                                onClick={() => handleUpdateAptStatus(apt.id, "completed")}
-                                className="p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-all"
-                                title="Mark as Completed"
                               >
                                 <CheckCircle className="h-4 w-4" />
                               </button>
                             )}
                             <button
-                              onClick={() => {
-                                if(confirm("Delete this appointment?")) {
-                                  setAppointments(appointments.filter(a => a.id !== apt.id))
-                                }
-                              }}
-                              className="p-2 hover:bg-red-50 rounded-lg text-slate-400 hover:text-red-500 transition-all"
+                              onClick={() => setAppointments(appointments.filter(a => a.id !== apt.id))}
+                              className="p-2 hover:bg-red-50 rounded-lg text-slate-400 hover:text-red-500"
                             >
                               <Trash2 className="h-4 w-4" />
                             </button>
@@ -347,13 +434,6 @@ export default function AdminPage() {
                         </td>
                       </tr>
                     ))}
-                    {appointments.length === 0 && (
-                      <tr>
-                        <td colSpan={5} className="px-6 py-20 text-center text-slate-400 italic">
-                          No appointment requests found.
-                        </td>
-                      </tr>
-                    )}
                   </tbody>
                 </table>
               </div>
@@ -414,8 +494,8 @@ export default function AdminPage() {
                               <Edit2 className="h-4 w-4" />
                             </button>
                             <button
-                              onClick={() => handleDelete(part.id)}
-                              className="p-2 hover:bg-red-50 rounded-lg text-slate-400 hover:text-red-500 transition-all"
+                              onClick={() => setRecords(records.filter(r => r.id !== part.id))}
+                              className="p-2 hover:bg-red-50 rounded-lg text-slate-400 hover:text-red-500"
                             >
                               <Trash2 className="h-4 w-4" />
                             </button>
@@ -428,74 +508,81 @@ export default function AdminPage() {
               </div>
             </div>
           )}
-
-          {activeTab === "prices" && (
-            <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
-              <div className="p-6 border-b flex flex-col md:flex-row gap-4 justify-between items-center">
-                <div className="relative w-full md:w-96">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
-                  <input
-                    type="text"
-                    placeholder="Search for price adjustment..."
-                    className="w-full pl-10 pr-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-primary/20"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </div>
-                <p className="text-sm text-slate-500">Update prices for billing and patient quotes.</p>
-              </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead>
-                    <tr className="bg-slate-50 border-b text-slate-400 text-xs font-bold uppercase tracking-wider">
-                      <th className="px-6 py-4">Body Part & Scan</th>
-                      <th className="px-6 py-4">Current Price</th>
-                      <th className="px-6 py-4 text-right">Quick Update</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {filteredRecords.map((part) => (
-                      <tr key={part.id} className="hover:bg-slate-50/50 transition-colors">
-                        <td className="px-6 py-4">
-                          <div className="font-bold text-secondary">{part.name}</div>
-                          <div className="text-xs text-slate-400">{scanTypes.find(t => t.id === part.scanTypeId)?.name}</div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-1 font-mono font-bold text-lg text-secondary">
-                            <span className="text-primary">$</span>
-                            {part.price || 0}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <button
-                            onClick={() => handleOpenModal(part)}
-                            className="text-primary hover:text-secondary font-bold text-sm transition-colors"
-                          >
-                            Adjust Price
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {activeTab === "staff" && (
-            <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
-              <div className="p-12 text-center">
-                <Users className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-secondary mb-2">Staff Directory</h3>
-                <p className="text-slate-500">The staff management module is ready for integration with your HR system.</p>
-              </div>
-            </div>
-          )}
         </div>
       </main>
 
-      {/* Modal */}
+      {/* POS Modal */}
+      {isPosModalOpen && (
+        <div className="fixed inset-0 bg-secondary/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="p-6 border-b flex justify-between items-center bg-slate-50">
+              <h3 className="text-lg font-bold text-secondary flex items-center gap-2">
+                <ShoppingCart className="h-5 w-5 text-primary" /> Create New Invoice
+              </h3>
+              <button onClick={() => setIsPosModalOpen(false)} className="text-slate-400 hover:text-secondary">
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            <form onSubmit={handleCreateInvoice} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-bold text-secondary mb-1">Patient Name</label>
+                <input
+                  required
+                  type="text"
+                  className="w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-primary/20 outline-none"
+                  value={posData.patientName}
+                  onChange={(e) => setPosData({ ...posData, patientName: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-secondary mb-1">Select Scan</label>
+                <select
+                  required
+                  className="w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-primary/20 outline-none"
+                  value={posData.scanId}
+                  onChange={(e) => setPosData({ ...posData, scanId: e.target.value })}
+                >
+                  <option value="">Choose a procedure...</option>
+                  {records.map(r => (
+                    <option key={r.id} value={r.id}>{r.name} - ${r.price}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-secondary mb-1">Branch</label>
+                <select
+                  required
+                  className="w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-primary/20 outline-none"
+                  value={posData.branchId}
+                  onChange={(e) => setPosData({ ...posData, branchId: e.target.value })}
+                >
+                  {branches.map(b => (
+                    <option key={b.id} value={b.id}>{b.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="pt-4 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsPosModalOpen(false)}
+                  className="flex-1 px-4 py-2 rounded-lg border font-bold text-secondary hover:bg-slate-50 transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2 rounded-lg bg-secondary text-white font-bold hover:bg-slate-800 flex items-center justify-center gap-2 transition-all shadow-lg shadow-secondary/20"
+                >
+                  Generate Invoice
+                  <ArrowRight className="h-4 w-4 text-primary" />
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Record Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-secondary/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
