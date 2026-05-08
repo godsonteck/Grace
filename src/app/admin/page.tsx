@@ -6,15 +6,16 @@ import { useData } from "@/context/DataContext";
 import {
   LayoutDashboard, Plus, Search, Edit2, Trash2, DollarSign,
   Settings, Users, X, Save, Calendar, CheckCircle, Clock,
-  Printer, CreditCard, ShoppingCart, ArrowRight, RefreshCw, Wifi, WifiOff, BarChart3, TrendingUp
+  Printer, CreditCard, ShoppingCart, ArrowRight, RefreshCw, Wifi, WifiOff, BarChart3, TrendingUp, Monitor
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 export default function AdminPage() {
   const {
     records, appointments, invoices, isOnline, isSyncing,
     addRecord, updateRecord, deleteRecord,
-    updateAppointment, addInvoice, payInvoice, syncData
+    updateAppointment, payInvoice, syncData
   } = useData();
 
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -23,7 +24,6 @@ export default function AdminPage() {
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isPosModalOpen, setIsPosModalOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<BodyPart | null>(null);
 
   // Form States
@@ -34,12 +34,6 @@ export default function AdminPage() {
     price: 0,
     duration: "20 mins",
     preparation: "No special preparation.",
-  });
-
-  const [posData, setPosData] = useState({
-    patientName: "",
-    scanId: "",
-    branchId: branches[0].id,
   });
 
   const filteredRecords = useMemo(() => {
@@ -102,29 +96,6 @@ export default function AdminPage() {
     setIsModalOpen(false);
   };
 
-  const handleCreateInvoice = (e: React.FormEvent) => {
-    e.preventDefault();
-    const scan = records.find(r => r.id === posData.scanId);
-    const branch = branches.find(b => b.id === posData.branchId);
-
-    if (!scan || !branch) return;
-
-    const newInvoice: Invoice = {
-      id: `INV-${Date.now()}`,
-      patientName: posData.patientName,
-      scanName: scan.name,
-      amount: scan.price || 0,
-      date: new Date().toLocaleDateString(),
-      status: "unpaid",
-      branchName: branch.name,
-    };
-
-    addInvoice(newInvoice);
-    setIsPosModalOpen(false);
-    setPosData({ patientName: "", scanId: "", branchId: branches[0].id });
-    setActiveTab("pos");
-  };
-
   return (
     <div className="min-h-screen bg-slate-50 flex">
       {/* Sidebar */}
@@ -139,7 +110,6 @@ export default function AdminPage() {
           {[
             { id: "dashboard", name: "Dashboard", icon: LayoutDashboard },
             { id: "reports", name: "Sales Reports", icon: BarChart3 },
-            { id: "pos", name: "POS & Billing", icon: CreditCard },
             { id: "appointments", name: "Appointments", icon: Calendar, badge: stats.pendingAppointments },
             { id: "body-parts", name: "Body Parts & Scans", icon: Settings },
             { id: "prices", name: "Price Management", icon: DollarSign },
@@ -163,6 +133,16 @@ export default function AdminPage() {
               )}
             </button>
           ))}
+
+          <div className="pt-4 border-t border-slate-700 mt-4">
+            <Link
+              href="/pos"
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-primary hover:bg-primary hover:text-white transition-all font-bold"
+            >
+              <Monitor className="h-5 w-5" />
+              Launch POS Mode
+            </Link>
+          </div>
         </nav>
 
         {/* Sync Info */}
@@ -174,11 +154,6 @@ export default function AdminPage() {
             </div>
             {isSyncing && <RefreshCw className="h-3 w-3 animate-spin text-primary" />}
           </div>
-          {!isOnline && (
-            <p className="text-[10px] text-slate-400 px-2 leading-tight">
-              Changes will sync automatically when connection is restored.
-            </p>
-          )}
         </div>
       </aside>
 
@@ -188,7 +163,6 @@ export default function AdminPage() {
           <h1 className="text-2xl font-bold text-secondary">
             {activeTab === "dashboard" ? "Admin Dashboard" :
              activeTab === "reports" ? "System Reports" :
-             activeTab === "pos" ? "Point of Sale" :
              activeTab === "appointments" ? "Appointment Requests" :
              activeTab === "body-parts" ? "Manage Body Parts & Scans" : "Admin Panel"}
           </h1>
@@ -204,11 +178,11 @@ export default function AdminPage() {
               </button>
             )}
             <button
-              onClick={() => setIsPosModalOpen(true)}
-              className="bg-secondary text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-slate-800 transition-all"
+              onClick={() => handleOpenModal()}
+              className="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all"
             >
-              <ShoppingCart className="h-5 w-5 text-primary" />
-              New Sale
+              <Plus className="h-5 w-5" />
+              Add Record
             </button>
           </div>
         </header>
@@ -236,8 +210,11 @@ export default function AdminPage() {
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="bg-white p-8 rounded-2xl border shadow-sm">
-                  <h3 className="text-lg font-bold text-secondary mb-6">Recent Sales</h3>
+                <div className="bg-white p-8 rounded-2xl border shadow-sm overflow-hidden">
+                  <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-lg font-bold text-secondary">Recent Invoice Sync</h3>
+                    <Link href="/pos" className="text-xs text-primary font-bold hover:underline">View POS Terminal</Link>
+                  </div>
                   <div className="space-y-4">
                     {invoices.slice(0, 5).map((inv) => (
                       <div key={inv.id} className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-all border border-transparent hover:border-slate-100">
@@ -307,76 +284,6 @@ export default function AdminPage() {
                     </div>
                   ))}
                 </div>
-              </div>
-            </div>
-          )}
-
-          {activeTab === "pos" && (
-            <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
-              <div className="p-6 border-b flex justify-between items-center">
-                <div className="relative w-96">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
-                  <input
-                    type="text"
-                    placeholder="Search invoices..."
-                    className="w-full pl-10 pr-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-primary/20"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </div>
-                <div className="text-sm font-bold text-secondary">
-                  Total Revenue: <span className="text-green-600 text-lg">${stats.totalRevenue}</span>
-                </div>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead>
-                    <tr className="bg-slate-50 border-b text-slate-400 text-xs font-bold uppercase tracking-wider">
-                      <th className="px-6 py-4">Invoice #</th>
-                      <th className="px-6 py-4">Patient & Scan</th>
-                      <th className="px-6 py-4">Branch</th>
-                      <th className="px-6 py-4">Amount</th>
-                      <th className="px-6 py-4">Status</th>
-                      <th className="px-6 py-4 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {invoices.map((inv) => (
-                      <tr key={inv.id} className="hover:bg-slate-50/50 transition-colors">
-                        <td className="px-6 py-4 font-mono text-xs text-slate-500">{inv.id}</td>
-                        <td className="px-6 py-4">
-                          <div className="font-bold text-secondary">{inv.patientName}</div>
-                          <div className="text-xs text-slate-400">{inv.scanName}</div>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-slate-500">{inv.branchName}</td>
-                        <td className="px-6 py-4 font-bold text-secondary">${inv.amount}</td>
-                        <td className="px-6 py-4">
-                          <span className={cn(
-                            "px-3 py-1 text-[10px] font-bold uppercase rounded-full",
-                            inv.status === "paid" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-                          )}>
-                            {inv.status}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex justify-end gap-2">
-                            {inv.status === "unpaid" && (
-                              <button
-                                onClick={() => payInvoice(inv.id)}
-                                className="p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-all"
-                              >
-                                <CreditCard className="h-4 w-4" />
-                              </button>
-                            )}
-                            <button className="p-2 hover:bg-slate-100 rounded-lg text-slate-400">
-                              <Printer className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
               </div>
             </div>
           )}
@@ -463,64 +370,6 @@ export default function AdminPage() {
           )}
         </div>
       </main>
-
-      {/* POS Modal */}
-      {isPosModalOpen && (
-        <div className="fixed inset-0 bg-secondary/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div className="p-6 border-b flex justify-between items-center bg-slate-50">
-              <h3 className="text-lg font-bold text-secondary flex items-center gap-2">
-                <ShoppingCart className="h-5 w-5 text-primary" /> Create New Invoice
-              </h3>
-              <button onClick={() => setIsPosModalOpen(false)} className="text-slate-400 hover:text-secondary">
-                <X className="h-6 w-6" />
-              </button>
-            </div>
-            <form onSubmit={handleCreateInvoice} className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-bold text-secondary mb-1">Patient Name</label>
-                <input
-                  required
-                  type="text"
-                  className="w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-primary/20 outline-none"
-                  value={posData.patientName}
-                  onChange={(e) => setPosData({ ...posData, patientName: e.target.value })}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-secondary mb-1">Select Scan</label>
-                <select
-                  required
-                  className="w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-primary/20 outline-none"
-                  value={posData.scanId}
-                  onChange={(e) => setPosData({ ...posData, scanId: e.target.value })}
-                >
-                  <option value="">Choose a procedure...</option>
-                  {records.map(r => (
-                    <option key={r.id} value={r.id}>{r.name} - ${r.price}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="pt-4 flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setIsPosModalOpen(false)}
-                  className="flex-1 px-4 py-2 rounded-lg border font-bold text-secondary hover:bg-slate-50 transition-all"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-4 py-2 rounded-lg bg-secondary text-white font-bold hover:bg-slate-800 flex items-center justify-center gap-2 transition-all shadow-lg shadow-secondary/20"
-                >
-                  Generate Invoice
-                  <ArrowRight className="h-4 w-4 text-primary" />
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
       {/* Record Modal */}
       {isModalOpen && (

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Activity, Lock, Mail, ArrowRight } from "lucide-react";
+import { Activity, Lock, Mail, ArrowRight, ShoppingCart, LayoutDashboard } from "lucide-react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -10,68 +10,57 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleLogin = (target: string) => {
     setIsLoading(true);
-
     // Simulate auth
     setTimeout(() => {
       localStorage.setItem("grace_auth", "true");
-      router.push("/admin");
+      router.push(target);
     }, 1000);
   };
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-3xl border shadow-xl shadow-slate-200/50 overflow-hidden">
-        <div className="p-8 bg-secondary text-white text-center">
-          <Activity className="h-12 w-12 text-primary mx-auto mb-4" />
-          <h1 className="text-2xl font-bold">Admin Portal</h1>
-          <p className="text-slate-400 text-sm mt-2">Authorized Access Only</p>
+      <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Admin Login */}
+        <div className="bg-white rounded-[40px] border shadow-xl shadow-slate-200/50 overflow-hidden group hover:border-primary transition-all">
+          <div className="p-12 text-center border-b bg-slate-50 group-hover:bg-primary/5 transition-colors">
+            <div className="w-20 h-20 bg-secondary text-white rounded-3xl flex items-center justify-center mx-auto mb-6 rotate-3 group-hover:rotate-0 transition-transform">
+              <LayoutDashboard className="h-10 w-10 text-primary" />
+            </div>
+            <h2 className="text-3xl font-black text-secondary">Administrator</h2>
+            <p className="text-slate-500 font-bold mt-2">Management & Reports</p>
+          </div>
+          <div className="p-12">
+            <button
+              onClick={() => handleLogin("/admin")}
+              className="w-full bg-secondary text-white py-5 rounded-3xl font-black flex items-center justify-center gap-3 hover:bg-slate-800 transition-all shadow-xl shadow-secondary/20"
+            >
+              ACCESS DASHBOARD
+              <ArrowRight className="h-6 w-6 text-primary" />
+            </button>
+          </div>
         </div>
 
-        <form onSubmit={handleLogin} className="p-8 space-y-6">
-          <div className="space-y-2">
-            <label className="text-sm font-bold text-secondary flex items-center gap-2">
-              <Mail className="h-4 w-4 text-primary" /> Email Address
-            </label>
-            <input
-              required
-              type="email"
-              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-              placeholder="admin@gracediagnostic.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
+        {/* POS Login */}
+        <div className="bg-white rounded-[40px] border shadow-xl shadow-slate-200/50 overflow-hidden group hover:border-primary transition-all">
+          <div className="p-12 text-center border-b bg-slate-50 group-hover:bg-primary/5 transition-colors">
+            <div className="w-20 h-20 bg-primary text-white rounded-3xl flex items-center justify-center mx-auto mb-6 -rotate-3 group-hover:rotate-0 transition-transform">
+              <ShoppingCart className="h-10 w-10 text-white" />
+            </div>
+            <h2 className="text-3xl font-black text-secondary">Billing Staff</h2>
+            <p className="text-slate-500 font-bold mt-2">POS & Cashier Terminal</p>
           </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-bold text-secondary flex items-center gap-2">
-              <Lock className="h-4 w-4 text-primary" /> Password
-            </label>
-            <input
-              required
-              type="password"
-              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
+          <div className="p-12">
+            <button
+              onClick={() => handleLogin("/pos")}
+              className="w-full bg-primary text-white py-5 rounded-3xl font-black flex items-center justify-center gap-3 hover:bg-primary/90 transition-all shadow-xl shadow-primary/20"
+            >
+              LAUNCH POS SYSTEM
+              <ArrowRight className="h-6 w-6 text-white" />
+            </button>
           </div>
-
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full bg-primary text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
-          >
-            {isLoading ? "Authenticating..." : "Sign In to Dashboard"}
-            {!isLoading && <ArrowRight className="h-5 w-5" />}
-          </button>
-
-          <p className="text-center text-xs text-slate-400">
-            Forgot password? Contact system administrator.
-          </p>
-        </form>
+        </div>
       </div>
     </div>
   );
