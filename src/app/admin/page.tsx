@@ -109,28 +109,70 @@ export default function AdminPage() {
     setIsModalOpen(false);
   };
 
-  // FILTERED DATA
+  // FILTERED DATA WITH SEARCH
   const filteredAppointments = useMemo(() =>
-    appointments.filter(a => globalBranchFilter === "all" || a.branchId === globalBranchFilter),
-    [appointments, globalBranchFilter]
+    appointments.filter(a => {
+      const matchesBranch = globalBranchFilter === "all" || a.branchId === globalBranchFilter;
+      const matchesSearch = a.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           a.scanName.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchesBranch && matchesSearch;
+    }),
+    [appointments, globalBranchFilter, searchTerm]
   );
 
   const filteredStaff = useMemo(() =>
-    staff.filter(s => globalBranchFilter === "all" || s.branchId === globalBranchFilter),
-    [staff, globalBranchFilter]
+    staff.filter(s => {
+      const matchesBranch = globalBranchFilter === "all" || s.branchId === globalBranchFilter;
+      const matchesSearch = s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           s.role.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchesBranch && matchesSearch;
+    }),
+    [staff, globalBranchFilter, searchTerm]
   );
 
   const filteredEquipment = useMemo(() =>
-    equipment.filter(e => globalBranchFilter === "all" || e.branchId === globalBranchFilter),
-    [equipment, globalBranchFilter]
+    equipment.filter(e => {
+      const matchesBranch = globalBranchFilter === "all" || e.branchId === globalBranchFilter;
+      const matchesSearch = e.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           e.type.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchesBranch && matchesSearch;
+    }),
+    [equipment, globalBranchFilter, searchTerm]
+  );
+
+  const filteredPatients = useMemo(() =>
+    patients.filter(p =>
+      p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.phone.toLowerCase().includes(searchTerm.toLowerCase())
+    ),
+    [patients, searchTerm]
+  );
+
+  const filteredRecords = useMemo(() =>
+    records.filter(r =>
+      r.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      r.category.toLowerCase().includes(searchTerm.toLowerCase())
+    ),
+    [records, searchTerm]
+  );
+
+  const filteredLogs = useMemo(() =>
+    auditLogs.filter(l =>
+      l.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      l.module.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      l.user.toLowerCase().includes(searchTerm.toLowerCase())
+    ),
+    [auditLogs, searchTerm]
   );
 
   const filteredInvoices = useMemo(() =>
     invoices.filter(i => {
       const branchObj = branches.find(b => b.name === i.branchName);
-      return globalBranchFilter === "all" || branchObj?.id === globalBranchFilter;
+      const matchesBranch = globalBranchFilter === "all" || branchObj?.id === globalBranchFilter;
+      const matchesSearch = i.patientName.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchesBranch && matchesSearch;
     }),
-    [invoices, globalBranchFilter]
+    [invoices, globalBranchFilter, searchTerm]
   );
 
   const stats = useMemo(() => {
@@ -182,7 +224,7 @@ export default function AdminPage() {
 
         <nav className="flex-grow p-6 space-y-1 overflow-y-auto custom-scrollbar">
           {filteredNav.map((item) => (
-            <button key={item.id} onClick={() => setActiveTab(item.id)} className={cn(
+            <button key={item.id} onClick={() => { setActiveTab(item.id); setSearchTerm(""); }} className={cn(
                 "w-full flex items-center justify-between px-5 py-4 rounded-[20px] transition-all duration-300",
                 activeTab === item.id ? "bg-primary text-white shadow-xl shadow-primary/20 scale-[1.02]" : "text-slate-500 hover:text-white hover:bg-slate-800/50"
               )}>
@@ -247,12 +289,13 @@ export default function AdminPage() {
                   { label: "Hardware Health", value: "99.9%", icon: Activity, color: "text-purple-600", bg: "bg-purple-50" },
                 ].map((stat, i) => (
                   <div key={i} className="bg-white p-8 rounded-[40px] border border-white shadow-[0_20px_50px_rgba(0,0,0,0.04)] flex flex-col justify-between hover:scale-[1.05] transition-all cursor-default relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-8 opacity-0 group-hover:opacity-10 group-hover:translate-x-4 transition-all"><stat.icon className="h-20 w-20" /></div>
                     <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center mb-8 shadow-inner relative z-10", stat.bg, stat.color)}>
                       <stat.icon className="h-7 w-7" />
                     </div>
                     <div className="relative z-10">
                       <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.3em] mb-2 italic">{stat.label}</p>
-                      <p className="text-4xl font-black text-secondary tracking-tighter italic">{stat.value}</p>
+                      <p className="text-4xl font-black text-secondary tracking-tighter italic underline decoration-primary decoration-4 underline-offset-8">{stat.value}</p>
                     </div>
                   </div>
                 ))}
@@ -260,39 +303,46 @@ export default function AdminPage() {
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                  <div className="bg-white p-12 rounded-[50px] border border-white shadow-2xl">
-                    <h3 className="text-2xl font-black text-secondary tracking-tighter uppercase italic mb-12">Station Logistics</h3>
+                    <div className="flex justify-between items-center mb-12">
+                       <h3 className="text-2xl font-black text-secondary tracking-tighter uppercase italic">Station Logistics</h3>
+                       <button onClick={() => setActiveTab("inventory")} className="text-primary font-black text-[10px] uppercase tracking-[0.2em] hover:underline flex items-center gap-2 italic">Registry View <ArrowRight className="h-3 w-3" /></button>
+                    </div>
                     <div className="space-y-6">
                        {filteredEquipment.slice(0, 4).map(e => (
-                         <div key={e.id} className="group flex items-center justify-between p-7 rounded-[30px] bg-slate-50 border-2 border-transparent transition-all">
+                         <div key={e.id} className="group flex items-center justify-between p-7 rounded-[30px] bg-slate-50 hover:bg-white border-2 border-transparent hover:border-slate-100 transition-all shadow-sm hover:shadow-xl">
                             <div className="flex items-center gap-6">
-                               <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center text-white", e.status === "operational" ? "bg-green-500" : "bg-orange-500")}>
+                               <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-2xl", e.status === "operational" ? "bg-green-500 shadow-green-500/30" : "bg-orange-500")}>
                                   <HardDrive className="h-7 w-7" />
                                </div>
                                <div>
                                   <p className="font-black text-secondary text-base italic uppercase">{e.name}</p>
-                                  <p className="text-[10px] text-slate-400 font-black uppercase mt-1">{e.type} • {branches.find(b => b.id === e.branchId)?.name.split("-")[1]}</p>
+                                  <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mt-1">{e.type} • {branches.find(b => b.id === e.branchId)?.name.split("-")[1]}</p>
                                </div>
                             </div>
+                            <span className={cn("text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full border", e.status === "operational" ? "bg-green-50 text-green-600 border-green-100" : "bg-orange-50 text-orange-600 border-orange-100")}>{e.status}</span>
                          </div>
                        ))}
-                       {filteredEquipment.length === 0 && <p className="py-10 text-center text-slate-400 italic">No equipment at this station.</p>}
+                       {filteredEquipment.length === 0 && <p className="text-center text-slate-400 font-bold uppercase italic py-10">No hardware assigned to this node.</p>}
                     </div>
                  </div>
 
                  <div className="bg-secondary p-12 rounded-[50px] text-white shadow-2xl relative overflow-hidden">
-                    <h3 className="text-2xl font-black italic uppercase mb-12">Revenue Intel</h3>
-                    <div className="space-y-12">
-                       {stats.branchBreakdown.filter(b => globalBranchFilter === "all" || b.name === branches.find(br => br.id === globalBranchFilter)?.name.split("-")[1].trim()).map((b, i) => (
-                         <div key={i} className="space-y-4">
-                            <div className="flex justify-between items-end">
-                               <p className="text-xs font-black uppercase tracking-[0.3em] text-slate-500 italic">{b.name}</p>
-                               <p className="text-4xl font-black text-primary italic tracking-tighter">${b.rev.toLocaleString()}</p>
+                    <div className="absolute top-0 right-0 p-16 opacity-5 scale-150 rotate-45 pointer-events-none italic font-black text-9xl">GRACE</div>
+                    <div className="relative z-10 h-full flex flex-col">
+                       <h3 className="text-2xl font-black italic tracking-tighter uppercase mb-12 flex items-center gap-3 underline decoration-primary decoration-4">Revenue Intel <Activity className="h-6 w-6 text-primary" /></h3>
+                       <div className="space-y-12 flex-grow">
+                          {stats.branchBreakdown.filter(b => globalBranchFilter === "all" || b.name === branches.find(br => br.id === globalBranchFilter)?.name.split("-")[1].trim()).map((b, i) => (
+                            <div key={i} className="space-y-4">
+                               <div className="flex justify-between items-end">
+                                  <p className="text-xs font-black uppercase tracking-[0.3em] text-slate-500 italic">{b.name}</p>
+                                  <p className="text-4xl font-black text-primary italic tracking-tighter">${b.rev.toLocaleString()}</p>
+                               </div>
+                               <div className="h-3 w-full bg-slate-800 rounded-full overflow-hidden border border-slate-700 p-0.5">
+                                  <div className="h-full bg-primary rounded-full transition-all duration-1000 shadow-[0_0_15px_#C8A97E]" style={{ width: stats.totalRevenue > 0 ? `${(b.rev / stats.totalRevenue) * 100}%` : '0%' }} />
+                               </div>
                             </div>
-                            <div className="h-3 w-full bg-slate-800 rounded-full overflow-hidden border border-slate-700">
-                               <div className="h-full bg-primary rounded-full transition-all duration-1000 shadow-[0_0_15px_#C8A97E]" style={{ width: stats.totalRevenue > 0 ? `${(b.rev / stats.totalRevenue) * 100}%` : '0%' }} />
-                            </div>
-                         </div>
-                       ))}
+                          ))}
+                       </div>
                     </div>
                  </div>
               </div>
@@ -331,207 +381,227 @@ export default function AdminPage() {
              </div>
           )}
 
-          {activeTab === "appointments" && (
-            <div className="bg-white rounded-[50px] shadow-2xl border border-white overflow-hidden animate-in fade-in zoom-in duration-500">
-               <div className="p-12 border-b bg-slate-50/30 flex justify-between items-center">
-                  <h3 className="text-2xl font-black text-secondary tracking-tighter uppercase italic">Pipeline: Clinical</h3>
+          {/* SHARED SEARCH HEADER FOR TABS */}
+          {["appointments", "patients", "staff", "body-parts", "inventory", "logs"].includes(activeTab) && (
+            <div className="bg-white rounded-[50px] shadow-2xl border border-white overflow-hidden animate-in fade-in zoom-in duration-500 mb-10">
+               <div className="p-10 border-b bg-slate-50/30 flex flex-col md:flex-row justify-between items-center gap-8">
+                  <div className="relative flex-grow max-w-2xl">
+                     <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-300" />
+                     <input
+                       type="text"
+                       placeholder={`Lookup ${activeTab.replace("-", " ")}...`}
+                       className="w-full pl-16 pr-6 py-5 rounded-[25px] border-2 border-slate-100 focus:border-primary outline-none font-bold text-lg italic shadow-inner transition-all"
+                       value={searchTerm}
+                       onChange={(e) => setSearchTerm(e.target.value)}
+                     />
+                  </div>
+                  <div className="flex gap-4">
+                     {activeTab === "patients" && <button onClick={() => handleOpenPatientModal()} className="bg-secondary text-white px-8 py-5 rounded-[25px] font-black uppercase tracking-widest text-[10px] flex items-center gap-3"><UserPlus className="h-4 w-4" /> Enroll</button>}
+                     {activeTab === "staff" && <button onClick={() => handleOpenStaffModal()} className="bg-secondary text-white px-8 py-5 rounded-[25px] font-black uppercase tracking-widest text-[10px] flex items-center gap-3"><Plus className="h-4 w-4" /> Recruit</button>}
+                     {activeTab === "inventory" && <button onClick={() => handleOpenEquipModal()} className="bg-secondary text-white px-8 py-5 rounded-[25px] font-black uppercase tracking-widest text-[10px] flex items-center gap-3"><Plus className="h-4 w-4" /> Register</button>}
+                     {activeTab === "body-parts" && <button onClick={() => handleOpenRecordModal()} className="bg-primary text-white px-8 py-5 rounded-[25px] font-black uppercase tracking-widest text-[10px] flex items-center gap-3 shadow-lg shadow-primary/20"><Plus className="h-4 w-4" /> Define</button>}
+                  </div>
                </div>
-               <table className="w-full text-left">
-                  <thead>
-                    <tr className="bg-slate-50 text-[10px] font-black uppercase text-slate-400 tracking-[0.3em]">
-                      <th className="px-12 py-8">Case ID</th>
-                      <th className="px-12 py-8">Clinical Group</th>
-                      <th className="px-12 py-8 text-center">Verification Status</th>
-                      <th className="px-12 py-8 text-right">Settlement</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-50">
-                    {filteredAppointments.map(apt => (
-                      <tr key={apt.id}>
-                        <td className="px-12 py-8">
-                           <p className="font-black text-secondary text-base italic uppercase">{apt.patientName}</p>
-                           <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mt-1">{branches.find(b => b.id === apt.branchId)?.name.split("-")[1]} • {apt.date}</p>
-                        </td>
-                        <td className="px-12 py-8"><span className="text-xs font-black uppercase text-slate-500 italic">{apt.scanName}</span></td>
-                        <td className="px-12 py-8 text-center">
-                           {apt.reportAttached ? (
-                             <span className="inline-flex items-center gap-3 text-green-600 text-[10px] font-black uppercase italic"><ShieldCheck className="h-5 w-5" /> Result Attested</span>
-                           ) : (
-                             <button onClick={() => handleOpenReportModal(apt)} className="text-primary hover:text-secondary bg-primary/5 px-4 py-2 rounded-xl text-[9px] font-black uppercase transition-all border border-primary/10">Verification Pending</button>
-                           )}
-                        </td>
-                        <td className="px-12 py-8 text-right">
-                           <button onClick={() => updateAppointment(apt.id, "confirmed")} className="p-4 bg-white border shadow-xl rounded-2xl hover:bg-green-600 hover:text-white transition-all"><CheckCircle className="h-5 w-5" /></button>
-                        </td>
-                      </tr>
-                    ))}
-                    {filteredAppointments.length === 0 && <tr><td colSpan={4} className="py-20 text-center text-slate-300 italic uppercase text-xs font-black tracking-widest">Station node clear.</td></tr>}
-                  </tbody>
-               </table>
-            </div>
-          )}
 
-          {activeTab === "patients" && (
-            <div className="bg-white rounded-[50px] shadow-2xl border border-white overflow-hidden animate-in fade-in duration-700">
-               <div className="p-12 border-b bg-slate-50/30 flex justify-between items-center">
-                  <h3 className="text-2xl font-black text-secondary tracking-tighter uppercase italic">Patient EHR Database</h3>
-                  <button onClick={() => handleOpenPatientModal()} className="bg-secondary text-white px-8 py-4 rounded-[22px] font-black uppercase tracking-widest text-[10px] flex items-center gap-3 shadow-xl">
-                    <UserPlus className="h-4 w-4" /> Enroll Patient
-                  </button>
+               <div className="overflow-x-auto">
+                 {activeTab === "appointments" && (
+                   <table className="w-full text-left">
+                      <thead>
+                        <tr className="bg-slate-50 text-[10px] font-black uppercase text-slate-400 tracking-[0.3em]">
+                          <th className="px-12 py-8">Case ID</th>
+                          <th className="px-12 py-8">Clinical Group</th>
+                          <th className="px-12 py-8 text-center">Verification Status</th>
+                          <th className="px-12 py-8 text-right">Settlement</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-50">
+                        {filteredAppointments.map(apt => (
+                          <tr key={apt.id} className="hover:bg-primary/[0.01] transition-all group">
+                            <td className="px-12 py-8">
+                               <p className="font-black text-secondary text-base italic uppercase underline decoration-slate-100 group-hover:decoration-primary group-hover:text-primary transition-all">{apt.patientName}</p>
+                               <div className="flex items-center gap-2 mt-2">
+                                  <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">{branches.find(b => b.id === apt.branchId)?.name.split("-")[1]}</span>
+                                  <span className="text-slate-200">•</span>
+                                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest italic">{apt.date}</span>
+                               </div>
+                            </td>
+                            <td className="px-12 py-8"><span className="text-xs font-black uppercase tracking-[0.1em] text-slate-500 italic">{apt.scanName}</span></td>
+                            <td className="px-12 py-8 text-center">
+                               {apt.reportAttached ? (
+                                 <span className="inline-flex items-center gap-3 text-green-600 text-[10px] font-black uppercase italic"><ShieldCheck className="h-5 w-5" /> Result Attested</span>
+                               ) : (
+                                 <button onClick={() => handleOpenReportModal(apt)} className="text-primary hover:text-secondary bg-primary/5 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] transition-all border border-primary/10">Verification Pending</button>
+                               )}
+                            </td>
+                            <td className="px-12 py-8 text-right">
+                               <div className="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
+                                  <button onClick={() => updateAppointment(apt.id, "confirmed")} className="p-4 bg-white border shadow-xl rounded-2xl hover:bg-green-600 hover:text-white transition-all"><CheckCircle className="h-5 w-5" /></button>
+                                  <button className="p-4 bg-white border shadow-xl rounded-2xl hover:bg-secondary hover:text-white transition-all"><FileText className="h-5 w-5" /></button>
+                               </div>
+                            </td>
+                          </tr>
+                        ))}
+                        {filteredAppointments.length === 0 && <tr><td colSpan={4} className="py-32 text-center text-slate-300 font-black uppercase tracking-[0.5em] italic">Station Clear • No Active Cases</td></tr>}
+                      </tbody>
+                   </table>
+                 )}
+
+                 {activeTab === "patients" && (
+                   <table className="w-full text-left">
+                      <thead>
+                        <tr className="bg-slate-50 text-[10px] font-black uppercase text-slate-400 tracking-[0.3em]">
+                          <th className="px-12 py-8">Full Identity</th>
+                          <th className="px-12 py-8">Medical Info</th>
+                          <th className="px-12 py-8">Contact Node</th>
+                          <th className="px-12 py-8 text-right">Ops</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-50">
+                        {filteredPatients.map(pt => (
+                          <tr key={pt.id} className="hover:bg-slate-50 transition-colors group">
+                            <td className="px-12 py-8">
+                               <p className="font-black text-secondary text-base italic uppercase">{pt.name}</p>
+                               <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.1em] mt-2">{pt.gender} • DOB: {pt.dob}</p>
+                            </td>
+                            <td className="px-12 py-8"><span className="text-xs font-black uppercase tracking-widest text-primary bg-primary/10 px-4 py-1.5 rounded-full border border-primary/20 italic shadow-sm shadow-primary/5">Blood: {pt.bloodGroup}</span></td>
+                            <td className="px-12 py-8 text-xs font-black text-slate-500 uppercase tracking-widest">{pt.phone}</td>
+                            <td className="px-12 py-8 text-right"><button onClick={() => handleOpenPatientModal(pt)} className="p-4 bg-slate-100 rounded-2xl hover:bg-primary hover:text-white transition-all shadow-sm group-hover:shadow-lg"><Edit2 className="h-4 w-4" /></button></td>
+                          </tr>
+                        ))}
+                        {filteredPatients.length === 0 && <tr><td colSpan={4} className="py-32 text-center text-slate-300 font-black uppercase tracking-[0.5em] italic">EHR Repository Empty</td></tr>}
+                      </tbody>
+                   </table>
+                 )}
+
+                 {activeTab === "staff" && (
+                    <table className="w-full text-left">
+                       <thead>
+                         <tr className="bg-slate-50 text-[10px] font-black uppercase text-slate-400 tracking-[0.3em]">
+                           <th className="px-12 py-8">Employee identity</th>
+                           <th className="px-12 py-8 text-center">Grade</th>
+                           <th className="px-12 py-8 text-center">Station</th>
+                           <th className="px-12 py-8 text-right">Ops</th>
+                         </tr>
+                       </thead>
+                       <tbody className="divide-y divide-slate-50">
+                         {filteredStaff.map(s => (
+                           <tr key={s.id} className="hover:bg-slate-50 transition-colors group">
+                             <td className="px-12 py-8">
+                                <p className="font-black text-secondary text-base italic uppercase">{s.name}</p>
+                                <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.1em] mt-1">{s.email}</p>
+                             </td>
+                             <td className="px-12 py-8 text-center"><span className="text-xs font-black uppercase tracking-widest text-slate-500 bg-slate-100 px-4 py-1.5 rounded-full border border-slate-200">{s.role}</span></td>
+                             <td className="px-12 py-8 text-center text-xs font-black text-primary italic uppercase tracking-tighter">{branches.find(b => b.id === s.branchId)?.name.split("-")[1]}</td>
+                             <td className="px-12 py-8 text-right">
+                                <div className="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
+                                   <button onClick={() => handleOpenStaffModal(s)} className="p-4 bg-white border shadow-sm rounded-2xl hover:bg-primary hover:text-white transition-all"><Edit2 className="h-4 w-4" /></button>
+                                   <button onClick={() => deleteStaff(s.id)} className="p-4 bg-white border shadow-sm rounded-2xl hover:bg-red-500 hover:text-white transition-all text-red-500"><Trash2 className="h-4 w-4" /></button>
+                                </div>
+                             </td>
+                           </tr>
+                         ))}
+                         {filteredStaff.length === 0 && <tr><td colSpan={4} className="py-32 text-center text-slate-300 font-black uppercase tracking-[0.5em] italic">No active personnel matching query</td></tr>}
+                       </tbody>
+                    </table>
+                 )}
+
+                 {activeTab === "body-parts" && (
+                    <table className="w-full text-left">
+                       <thead>
+                         <tr className="bg-slate-50 text-[10px] font-black uppercase text-slate-400 tracking-[0.3em]">
+                           <th className="px-12 py-8">Procedure</th>
+                           <th className="px-12 py-8 text-center">Fee ($)</th>
+                           <th className="px-12 py-8 text-right">Ops</th>
+                         </tr>
+                       </thead>
+                       <tbody className="divide-y divide-slate-50">
+                         {filteredRecords.map(r => (
+                           <tr key={r.id} className="hover:bg-slate-50 transition-colors group">
+                             <td className="px-12 py-8 font-black text-secondary text-base italic uppercase">{r.name}</td>
+                             <td className="px-12 py-8 text-center font-black text-secondary text-2xl tracking-tighter italic">${r.price.toLocaleString()}</td>
+                             <td className="px-12 py-8 text-right">
+                                <div className="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
+                                   <button onClick={() => handleOpenRecordModal(r)} className="p-4 bg-white border shadow-sm rounded-2xl hover:bg-secondary hover:text-white transition-all"><Edit2 className="h-4 w-4" /></button>
+                                   <button onClick={() => deleteRecord(r.id)} className="p-4 bg-white border shadow-sm rounded-2xl hover:bg-red-500 hover:text-white transition-all text-red-500"><Trash2 className="h-4 w-4" /></button>
+                                </div>
+                             </td>
+                           </tr>
+                         ))}
+                         {filteredRecords.length === 0 && <tr><td colSpan={3} className="py-32 text-center text-slate-300 font-black uppercase tracking-[0.5em] italic">Service catalog clear</td></tr>}
+                       </tbody>
+                    </table>
+                 )}
+
+                 {activeTab === "inventory" && (
+                    <table className="w-full text-left">
+                       <thead>
+                         <tr className="bg-slate-50 text-[10px] font-black uppercase text-slate-400 tracking-[0.3em]">
+                           <th className="px-12 py-8">Hardware identity</th>
+                           <th className="px-12 py-8 text-center">Status</th>
+                           <th className="px-12 py-8 text-right">Ops</th>
+                         </tr>
+                       </thead>
+                       <tbody className="divide-y divide-slate-50">
+                         {filteredEquipment.map(e => (
+                           <tr key={e.id} className="hover:bg-slate-50 transition-colors group">
+                             <td className="px-12 py-8 font-black text-secondary text-base italic uppercase">{e.name}</td>
+                             <td className="px-12 py-8 text-center"><span className={cn("px-5 py-2 rounded-full text-[9px] font-black uppercase tracking-widest border", e.status === "operational" ? "bg-green-50 text-green-600 border-green-100" : "bg-red-50 text-red-600 border-red-100")}>{e.status}</span></td>
+                             <td className="px-12 py-8 text-right">
+                                <div className="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
+                                   <button onClick={() => handleOpenEquipModal(e)} className="p-4 bg-white border shadow-sm rounded-2xl hover:bg-primary hover:text-white transition-all"><Edit2 className="h-4 w-4" /></button>
+                                   <button onClick={() => deleteEquipment(e.id)} className="p-4 bg-white border shadow-sm rounded-2xl hover:bg-red-500 hover:text-white transition-all text-red-500"><Trash2 className="h-4 w-4" /></button>
+                                </div>
+                             </td>
+                           </tr>
+                         ))}
+                         {filteredEquipment.length === 0 && <tr><td colSpan={3} className="py-32 text-center text-slate-300 font-black uppercase tracking-[0.5em] italic">Asset registry clear</td></tr>}
+                       </tbody>
+                    </table>
+                 )}
+
+                 {activeTab === "logs" && (
+                    <div className="p-10 space-y-4">
+                       {filteredLogs.map(log => (
+                         <div key={log.id} className="flex items-center gap-10 p-10 rounded-[40px] bg-slate-50 border-2 border-slate-100 transition-all hover:bg-white hover:shadow-2xl hover:-translate-y-1 group">
+                            <div className="w-32 font-black text-slate-300 font-mono text-xs italic tracking-tighter">{log.timestamp.split(",")[1]}</div>
+                            <div className="w-44 shrink-0"><span className="px-5 py-2 bg-primary/10 text-primary rounded-2xl text-[9px] font-black uppercase tracking-[0.3em] border border-primary/20">{log.module}</span></div>
+                            <div className="flex-grow font-black text-secondary text-sm group-hover:text-primary transition-colors italic tracking-tight">{log.action}</div>
+                         </div>
+                       ))}
+                       {filteredLogs.length === 0 && <p className="py-32 text-center text-slate-300 font-black uppercase tracking-[0.5em] italic">No audit events logged.</p>}
+                    </div>
+                 )}
                </div>
-               <table className="w-full text-left">
-                  <thead>
-                    <tr className="bg-slate-50 text-[10px] font-black uppercase text-slate-400 tracking-[0.3em]">
-                      <th className="px-12 py-8">Full Identity</th>
-                      <th className="px-12 py-8">Medical Info</th>
-                      <th className="px-12 py-8">Contact Node</th>
-                      <th className="px-12 py-8 text-right">Ops</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-50">
-                    {patients.map(pt => (
-                      <tr key={pt.id} className="hover:bg-slate-50 transition-colors">
-                        <td className="px-12 py-8">
-                           <p className="font-black text-secondary text-base italic uppercase">{pt.name}</p>
-                           <p className="text-[10px] text-slate-400 font-bold uppercase">{pt.gender} • DOB: {pt.dob}</p>
-                        </td>
-                        <td className="px-12 py-8"><span className="text-xs font-black uppercase tracking-widest text-primary bg-primary/10 px-4 py-1.5 rounded-full border border-primary/20">Blood: {pt.bloodGroup}</span></td>
-                        <td className="px-12 py-8 text-xs font-bold text-slate-500 uppercase">{pt.phone}</td>
-                        <td className="px-12 py-8 text-right"><button onClick={() => handleOpenPatientModal(pt)} className="p-4 bg-slate-100 rounded-2xl hover:bg-primary hover:text-white transition-all shadow-sm"><Edit2 className="h-4 w-4" /></button></td>
-                      </tr>
-                    ))}
-                  </tbody>
-               </table>
             </div>
-          )}
-
-          {activeTab === "staff" && (
-            <div className="bg-white rounded-[50px] shadow-2xl border border-white overflow-hidden animate-in fade-in duration-700">
-               <div className="p-12 border-b bg-slate-50/30 flex justify-between items-center">
-                  <h3 className="text-2xl font-black text-secondary tracking-tighter uppercase italic">Human Capital</h3>
-                  <button onClick={() => handleOpenStaffModal()} className="bg-secondary text-white px-10 py-5 rounded-[28px] font-black uppercase tracking-[0.2em] text-[10px] flex items-center gap-3 hover:bg-primary transition-all shadow-2xl">
-                    <UserPlus className="h-4 w-4" /> Recruit Personnel
-                  </button>
-               </div>
-               <table className="w-full text-left">
-                  <tbody className="divide-y divide-slate-50">
-                    {filteredStaff.map(s => (
-                      <tr key={s.id}>
-                        <td className="px-12 py-8">
-                           <p className="font-black text-secondary text-base italic uppercase">{s.name}</p>
-                           <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.1em] mt-1">{s.email}</p>
-                        </td>
-                        <td className="px-12 py-8 text-center"><span className="text-xs font-black uppercase tracking-widest text-slate-500 bg-slate-100 px-4 py-1.5 rounded-full">{s.role}</span></td>
-                        <td className="px-12 py-8 text-right">
-                           <div className="flex justify-end gap-2">
-                              <button onClick={() => handleOpenStaffModal(s)} className="p-4 bg-slate-100 rounded-2xl hover:bg-primary hover:text-white transition-all shadow-sm"><Edit2 className="h-4 w-4" /></button>
-                              <button onClick={() => deleteStaff(s.id)} className="p-4 bg-red-50 text-red-400 rounded-2xl hover:bg-red-500 hover:text-white transition-all shadow-sm"><Trash2 className="h-4 w-4" /></button>
-                           </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-               </table>
-            </div>
-          )}
-
-          {activeTab === "body-parts" && (
-            <div className="bg-white rounded-[50px] shadow-2xl border border-white overflow-hidden animate-in fade-in duration-500">
-               <div className="p-12 border-b bg-slate-50/30 flex justify-between items-center">
-                  <h3 className="text-2xl font-black text-secondary tracking-tighter uppercase italic">Service Catalog</h3>
-                  <button onClick={() => handleOpenRecordModal()} className="bg-primary text-white px-10 py-5 rounded-[28px] font-black uppercase tracking-[0.2em] text-[10px] flex items-center gap-3">
-                    <Plus className="h-4 w-4 text-white" /> Define Service
-                  </button>
-               </div>
-               <table className="w-full text-left">
-                  <tbody className="divide-y divide-slate-50">
-                    {records.map(r => (
-                      <tr key={r.id}>
-                        <td className="px-12 py-8 font-black text-secondary text-sm italic">{r.name}</td>
-                        <td className="px-12 py-8 text-center font-black text-secondary text-xl tracking-tighter">${r.price.toLocaleString()}</td>
-                        <td className="px-12 py-8 text-right">
-                           <div className="flex justify-end gap-2">
-                              <button onClick={() => handleOpenRecordModal(r)} className="p-4 bg-slate-100 rounded-2xl hover:bg-secondary hover:text-white transition-all"><Edit2 className="h-4 w-4" /></button>
-                              <button onClick={() => deleteRecord(r.id)} className="p-4 bg-red-50 text-red-500 rounded-2xl hover:bg-red-500 hover:text-white transition-all"><Trash2 className="h-4 w-4" /></button>
-                           </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-               </table>
-            </div>
-          )}
-
-          {activeTab === "inventory" && (
-            <div className="bg-white rounded-[50px] shadow-2xl border border-white overflow-hidden animate-in fade-in duration-500">
-               <div className="p-12 border-b bg-slate-50/30 flex justify-between items-center">
-                  <h3 className="text-2xl font-black text-secondary tracking-tighter uppercase italic">Asset Registry</h3>
-                  <button onClick={() => handleOpenEquipModal()} className="bg-secondary text-white px-10 py-5 rounded-[28px] font-black uppercase tracking-[0.2em] text-[10px] flex items-center gap-3">
-                    <Plus className="h-4 w-4" /> Register Machine
-                  </button>
-               </div>
-               <table className="w-full text-left">
-                  <tbody className="divide-y divide-slate-50">
-                    {filteredEquipment.map(e => (
-                      <tr key={e.id}>
-                        <td className="px-12 py-8 font-black text-secondary text-sm italic uppercase">{e.name}</td>
-                        <td className="px-12 py-8 text-center"><span className={cn("px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border", e.status === "operational" ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600")}>{e.status}</span></td>
-                        <td className="px-12 py-8 text-right">
-                           <div className="flex justify-end gap-2">
-                              <button onClick={() => handleOpenEquipModal(e)} className="p-4 bg-slate-100 rounded-2xl hover:bg-primary hover:text-white transition-all shadow-sm"><Edit2 className="h-4 w-4" /></button>
-                              <button onClick={() => deleteEquipment(e.id)} className="p-4 bg-red-50 text-red-400 rounded-2xl hover:bg-red-500 hover:text-white transition-all shadow-sm"><Trash2 className="h-4 w-4" /></button>
-                           </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-               </table>
-            </div>
-          )}
-
-          {activeTab === "logs" && (
-             <div className="bg-white rounded-[50px] shadow-2xl border border-white p-12 animate-in fade-in duration-500">
-                <h3 className="text-2xl font-black text-secondary tracking-tighter uppercase italic mb-12 text-center underline decoration-primary decoration-8">Audit Trail</h3>
-                <div className="space-y-4 max-w-4xl mx-auto">
-                   {auditLogs.map(log => (
-                     <div key={log.id} className="grid grid-cols-4 gap-4 p-8 rounded-[35px] bg-slate-50 border-2 border-slate-100 text-[10px] font-black uppercase tracking-widest italic group hover:bg-white hover:shadow-xl transition-all">
-                        <div className="text-slate-300">{log.timestamp}</div>
-                        <div className="text-primary">{log.module}</div>
-                        <div className="text-secondary group-hover:text-primary transition-colors">{log.action}</div>
-                        <div className="text-right text-slate-400">{log.user}</div>
-                     </div>
-                   ))}
-                </div>
-             </div>
           )}
         </div>
       </main>
 
-      {/* Unified Enterprise Modal */}
+      {/* Enterprise Integrated Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-secondary/95 backdrop-blur-3xl z-[200] flex items-center justify-center p-6">
-          <div className="bg-white rounded-[70px] shadow-2xl w-full max-w-3xl overflow-hidden animate-in fade-in zoom-in duration-500">
-            <div className="p-20 border-b bg-slate-50/50 flex justify-between items-center relative">
-               <div className="absolute top-0 right-0 p-16 opacity-5 scale-150 rotate-45 pointer-events-none"><ShieldCheck className="h-60 w-60 text-primary" /></div>
-               <div className="relative z-10">
-                  <h3 className="text-6xl font-black text-secondary tracking-tighter uppercase italic">{editingItem ? "Update" : "Add Entry"}</h3>
-                  <p className="text-[11px] text-primary font-black uppercase tracking-[0.8em] mt-6 ml-2 italic">Verification Protocol 1.04-X</p>
+          <div className="bg-white rounded-[70px] shadow-2xl w-full max-w-3xl overflow-hidden animate-in fade-in slide-in-from-bottom-20 duration-700 border-[12px] border-white/50 relative">
+            <div className="absolute top-0 right-0 p-16 opacity-5 scale-150 rotate-45 pointer-events-none"><ShieldCheck className="h-60 w-60 text-primary" /></div>
+            <div className="p-20 border-b bg-slate-50/50 flex justify-between items-center relative z-10">
+               <div>
+                  <h3 className="text-6xl font-black text-secondary tracking-tighter uppercase italic underline decoration-primary decoration-[12px] underline-offset-[12px]">{editingItem ? "Update" : "Registry"}</h3>
+                  <p className="text-[11px] text-primary font-black uppercase tracking-[0.8em] mt-12 ml-4 italic">Verification Protocol 4.01-X</p>
                </div>
-               <button onClick={() => setIsModalOpen(false)} className="p-8 bg-white rounded-[40px] shadow-2xl text-slate-300 hover:text-red-500 active:scale-90 transition-all relative z-10 border border-slate-100"><X className="h-12 w-12" /></button>
+               <button onClick={() => setIsModalOpen(false)} className="p-8 bg-white rounded-[40px] shadow-2xl text-slate-200 hover:text-red-500 active:scale-75 transition-all relative z-10 border-2 border-slate-50"><X className="h-12 w-12" /></button>
             </div>
 
-            <form onSubmit={handleSave} className="p-20 space-y-16 overflow-y-auto max-h-[60vh] custom-scrollbar">
+            <form onSubmit={handleSave} className="p-20 space-y-16 overflow-y-auto max-h-[60vh] custom-scrollbar relative z-10">
                {modalType === "report" && (
                  <div className="space-y-12">
-                    <div className="p-10 rounded-[45px] bg-blue-50 border-4 border-blue-100 italic relative overflow-hidden group">
+                    <div className="p-12 rounded-[50px] bg-blue-50 border-4 border-blue-100 italic relative overflow-hidden group">
                        <div className="absolute top-0 right-0 p-8 opacity-5 -rotate-12 group-hover:rotate-0 transition-transform"><Microscope className="h-32 w-32" /></div>
                        <p className="text-xs font-black text-blue-400 uppercase tracking-[0.5em] mb-6 flex items-center gap-3 relative z-10 italic">Clinical Intelligence</p>
-                       <p className="text-4xl font-black text-blue-900 tracking-tighter uppercase leading-none relative z-10">{editingItem.patientName}</p>
-                       <p className="text-sm font-bold text-blue-700 mt-4 relative z-10 italic">{editingItem.scanName} • Pipeline Node: #{editingItem.id}</p>
+                       <p className="text-5xl font-black text-blue-900 tracking-tighter uppercase leading-none relative z-10">{editingItem.patientName}</p>
+                       <p className="text-sm font-bold text-blue-700 mt-6 relative z-10 italic">{editingItem.scanName} • Pipeline Node: #{editingItem.id}</p>
                     </div>
                     <div className="space-y-6">
-                       <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.5em] ml-6 italic">Radiology Findings & Impression</label>
-                       <textarea required rows={5} className="w-full px-12 py-10 rounded-[50px] border-4 border-slate-50 focus:border-primary outline-none font-black text-2xl italic bg-slate-50/50 shadow-inner resize-none transition-all" placeholder="SYNTHESIZE RESULT..." value={reportContent} onChange={e => setReportContent(e.target.value)} />
+                       <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.5em] ml-8 italic font-black">Clinical Impression</label>
+                       <textarea required rows={5} className="w-full px-12 py-10 rounded-[50px] border-4 border-slate-50 focus:border-primary outline-none font-black text-2xl italic bg-slate-50/50 shadow-inner resize-none transition-all tracking-tighter" placeholder="SYNTHESIZE RESULT..." value={reportContent} onChange={e => setReportContent(e.target.value)} />
                     </div>
                  </div>
                )}
@@ -539,19 +609,19 @@ export default function AdminPage() {
                {modalType === "staff" && (
                  <div className="space-y-12">
                    <div className="space-y-6">
-                      <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.5em] ml-6 italic">Personnel Legal Identity</label>
-                      <input required type="text" className="w-full px-12 py-10 rounded-[50px] border-4 border-slate-50 focus:border-primary outline-none text-4xl font-black italic shadow-inner bg-slate-50/30" value={staffForm.name} onChange={e => setStaffForm({...staffForm, name: e.target.value})} />
+                      <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.6em] ml-8 italic font-black">Legal Identity</label>
+                      <input required type="text" className="w-full px-12 py-10 rounded-[50px] border-4 border-slate-50 focus:border-primary outline-none text-4xl font-black italic shadow-inner bg-slate-50/30 tracking-tighter" value={staffForm.name} onChange={e => setStaffForm({...staffForm, name: e.target.value})} />
                    </div>
                    <div className="grid grid-cols-2 gap-12">
                       <div className="space-y-6">
-                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.5em] ml-6 italic">Deployment Node</label>
-                        <select className="w-full px-12 py-10 rounded-[50px] border-4 border-slate-50 focus:border-primary outline-none font-black text-xl bg-white appearance-none italic shadow-sm" value={staffForm.branchId} onChange={e => setStaffForm({...staffForm, branchId: e.target.value})}>
+                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.6em] ml-8 italic font-black">Node</label>
+                        <select className="w-full px-12 py-10 rounded-[50px] border-4 border-slate-50 focus:border-primary outline-none font-black text-xl bg-white appearance-none italic shadow-sm tracking-tighter" value={staffForm.branchId} onChange={e => setStaffForm({...staffForm, branchId: e.target.value})}>
                            {branches.map(b => <option key={b.id} value={b.id}>{b.name.split("-")[1].trim().toUpperCase()}</option>)}
                         </select>
                       </div>
                       <div className="space-y-6">
-                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.5em] ml-6 italic">Security Clearance</label>
-                        <select className="w-full px-12 py-10 rounded-[50px] border-4 border-slate-50 focus:border-primary outline-none font-black text-xl bg-white appearance-none italic shadow-sm" value={staffForm.role} onChange={e => setStaffForm({...staffForm, role: e.target.value as any})}>
+                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.6em] ml-8 italic font-black">Grade</label>
+                        <select className="w-full px-12 py-10 rounded-[50px] border-4 border-slate-50 focus:border-primary outline-none font-black text-xl bg-white appearance-none italic shadow-sm tracking-tighter" value={staffForm.role} onChange={e => setStaffForm({...staffForm, role: e.target.value as any})}>
                            {["Radiologist", "Doctor", "Nurse", "Receptionist", "Admin"].map(r => <option key={r} value={r}>{r.toUpperCase()}</option>)}
                         </select>
                       </div>
@@ -562,17 +632,17 @@ export default function AdminPage() {
                {modalType === "record" && (
                  <div className="space-y-12">
                    <div className="space-y-6">
-                      <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.5em] ml-6 italic">Service Name</label>
-                      <input required type="text" className="w-full px-12 py-10 rounded-[50px] border-4 border-slate-50 focus:border-primary outline-none text-4xl font-black italic shadow-inner bg-slate-50/30" value={recordForm.name} onChange={e => setRecordRecordForm({...recordForm, name: e.target.value})} />
+                      <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.6em] ml-8 italic font-black">Protocol Name</label>
+                      <input required type="text" className="w-full px-12 py-10 rounded-[50px] border-4 border-slate-50 focus:border-primary outline-none text-4xl font-black italic shadow-inner bg-slate-50/30 tracking-tighter" value={recordForm.name} onChange={e => setRecordRecordForm({...recordForm, name: e.target.value})} />
                    </div>
                    <div className="grid grid-cols-2 gap-12">
                       <div className="space-y-6">
-                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.5em] ml-6 italic">Fee Structure ($)</label>
-                        <input type="number" className="w-full px-12 py-10 rounded-[50px] border-4 border-slate-50 focus:border-primary outline-none font-black text-3xl italic text-primary shadow-sm" value={recordForm.price} onChange={e => setRecordRecordForm({...recordForm, price: parseInt(e.target.value) || 0})} />
+                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.6em] ml-8 italic font-black">Unit Fee ($)</label>
+                        <input type="number" className="w-full px-12 py-10 rounded-[50px] border-4 border-slate-50 focus:border-primary outline-none font-black text-4xl italic text-primary tracking-tighter shadow-sm" value={recordForm.price} onChange={e => setRecordRecordForm({...recordForm, price: parseInt(e.target.value) || 0})} />
                       </div>
                       <div className="space-y-6">
-                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.5em] ml-6 italic">Protocol Time</label>
-                        <input type="text" className="w-full px-12 py-10 rounded-[50px] border-4 border-slate-50 focus:border-primary outline-none font-black text-xl italic" value={recordForm.duration} onChange={e => setRecordRecordForm({...recordForm, duration: e.target.value})} />
+                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.6em] ml-8 italic font-black">Time</label>
+                        <input type="text" className="w-full px-12 py-10 rounded-[50px] border-4 border-slate-50 focus:border-primary outline-none font-black text-2xl italic tracking-tighter shadow-sm" value={recordForm.duration} onChange={e => setRecordRecordForm({...recordForm, duration: e.target.value})} />
                       </div>
                    </div>
                  </div>
@@ -581,19 +651,19 @@ export default function AdminPage() {
                {modalType === "equipment" && (
                  <div className="space-y-12">
                     <div className="space-y-6">
-                       <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em] ml-4 italic font-black">Machine Serial Name</label>
-                       <input required type="text" className="w-full px-12 py-10 rounded-[50px] border-4 border-slate-50 focus:border-primary outline-none text-4xl font-black italic shadow-inner bg-slate-50/30" value={equipForm.name} onChange={e => setEquipForm({...equipForm, name: e.target.value})} />
+                       <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.6em] ml-8 italic font-black">Hardware Serial</label>
+                       <input required type="text" className="w-full px-12 py-10 rounded-[50px] border-4 border-slate-50 focus:border-primary outline-none text-4xl font-black italic shadow-inner bg-slate-50/30 tracking-tighter" value={equipForm.name} onChange={e => setEquipForm({...equipForm, name: e.target.value})} />
                     </div>
-                    <div className="grid grid-cols-2 gap-10">
+                    <div className="grid grid-cols-2 gap-12">
                        <div className="space-y-6">
-                          <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em] ml-4 italic font-black">Deployment Node</label>
-                          <select className="w-full px-12 py-10 rounded-[50px] border-4 border-slate-50 focus:border-primary outline-none font-black text-xl bg-white appearance-none italic shadow-sm" value={equipForm.branchId} onChange={e => setEquipForm({...equipForm, branchId: e.target.value})}>
+                          <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.6em] ml-8 italic font-black">Node</label>
+                          <select className="w-full px-12 py-10 rounded-[50px] border-4 border-slate-50 focus:border-primary outline-none font-black text-xl bg-white appearance-none italic shadow-sm tracking-tighter" value={equipForm.branchId} onChange={e => setEquipForm({...equipForm, branchId: e.target.value})}>
                              {branches.map(b => <option key={b.id} value={b.id}>{b.name.split("-")[1].trim().toUpperCase()}</option>)}
                           </select>
                        </div>
                        <div className="space-y-6">
-                          <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em] ml-4 italic font-black">Operational Health</label>
-                          <select className="w-full px-12 py-10 rounded-[50px] border-4 border-slate-50 focus:border-primary outline-none font-black text-xl bg-white appearance-none italic shadow-sm" value={equipForm.status} onChange={e => setEquipForm({...equipForm, status: e.target.value as any})}>
+                          <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.6em] ml-8 italic font-black">Health</label>
+                          <select className="w-full px-12 py-10 rounded-[50px] border-4 border-slate-50 focus:border-primary outline-none font-black text-xl bg-white appearance-none italic shadow-sm tracking-tighter" value={equipForm.status} onChange={e => setEquipForm({...equipForm, status: e.target.value as any})}>
                              <option value="operational">OPERATIONAL</option>
                              <option value="maintenance-required">MAINT. REQUIRED</option>
                              <option value="faulty">SYSTEM FAULT</option>
@@ -606,28 +676,28 @@ export default function AdminPage() {
                {modalType === "patient" && (
                  <div className="space-y-12">
                     <div className="space-y-6">
-                       <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.6em] ml-8 italic">Legal Identity</label>
-                       <input required type="text" className="w-full px-12 py-10 rounded-[50px] border-4 border-slate-50 focus:border-primary outline-none text-4xl font-black italic shadow-inner" value={patientForm.name} onChange={e => setPatientForm({...patientForm, name: e.target.value})} />
+                       <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.6em] ml-8 italic font-black">Legal Identity</label>
+                       <input required type="text" className="w-full px-12 py-10 rounded-[50px] border-4 border-slate-50 focus:border-primary outline-none text-4xl font-black italic shadow-inner bg-slate-50/30 tracking-tighter" value={patientForm.name} onChange={e => setPatientForm({...patientForm, name: e.target.value})} />
                     </div>
                     <div className="grid grid-cols-2 gap-12">
                        <div className="space-y-6">
-                          <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.6em] ml-8 italic">Gender</label>
-                          <select className="w-full px-12 py-10 rounded-[50px] border-4 border-slate-50 outline-none font-black bg-white italic shadow-sm" value={patientForm.gender} onChange={e => setPatientForm({...patientForm, gender: e.target.value})}>
+                          <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.6em] ml-8 italic font-black">Gender</label>
+                          <select className="w-full px-12 py-10 rounded-[50px] border-4 border-slate-50 outline-none font-black bg-white italic shadow-sm tracking-tighter appearance-none" value={patientForm.gender} onChange={e => setPatientForm({...patientForm, gender: e.target.value})}>
                              <option value="Male">MALE</option>
                              <option value="Female">FEMALE</option>
                              <option value="Other">OTHER</option>
                           </select>
                        </div>
                        <div className="space-y-6">
-                          <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.6em] ml-8 italic">Blood Group</label>
-                          <input type="text" className="w-full px-12 py-10 rounded-[50px] border-4 border-slate-50 focus:border-primary outline-none font-black text-xl italic" value={patientForm.bloodGroup} onChange={e => setPatientForm({...patientForm, bloodGroup: e.target.value})} />
+                          <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.6em] ml-8 italic font-black">Blood Group</label>
+                          <input type="text" className="w-full px-12 py-10 rounded-[50px] border-4 border-slate-50 focus:border-primary outline-none font-black text-2xl italic tracking-tighter shadow-sm bg-white" value={patientForm.bloodGroup} onChange={e => setPatientForm({...patientForm, bloodGroup: e.target.value})} />
                        </div>
                     </div>
                  </div>
                )}
 
-               <button type="submit" className="w-full bg-secondary text-white py-12 rounded-[55px] font-black uppercase tracking-[0.3em] text-2xl flex items-center justify-center gap-8 hover:bg-primary transition-all shadow-[0_50px_100px_rgba(0,0,0,0.25)] active:scale-95 italic mt-12">
-                  <ShieldCheck className="h-12 w-12 text-primary" /> Execute Protocol
+               <button type="submit" className="w-full bg-secondary text-white py-12 rounded-[55px] font-black uppercase tracking-[0.3em] text-2xl flex items-center justify-center gap-8 hover:bg-primary transition-all shadow-[0_50px_100px_rgba(0,0,0,0.25)] active:scale-95 italic">
+                  <ShieldCheck className="h-12 w-12 text-primary shadow-[0_0_20px_#C8A97E]" /> Attest Entry
                </button>
             </form>
           </div>

@@ -86,18 +86,18 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  // Sync state to localStorage
-  useEffect(() => {
-    const save = (key: string, data: any) => localStorage.setItem(key, JSON.stringify(data));
-    save('grace_records', records);
-    save('grace_appointments', appointments);
-    save('grace_invoices', invoices);
-    save('grace_staff', staff);
-    save('grace_equipment', equipment);
-    save('grace_audit_logs', auditLogs);
-    save('grace_patients', patients);
-    save('grace_sync_queue', syncQueue);
-  }, [records, appointments, invoices, staff, equipment, auditLogs, patients, syncQueue]);
+  // ⚡ OPTIMIZATION: Individual persistence hooks
+  // Splitting the massive sync effect into granular hooks prevents redundant
+  // JSON.stringify() and localStorage.setItem() operations on unaffected data keys.
+  // This reduces main-thread blocking during state updates.
+  useEffect(() => { localStorage.setItem('grace_records', JSON.stringify(records)); }, [records]);
+  useEffect(() => { localStorage.setItem('grace_appointments', JSON.stringify(appointments)); }, [appointments]);
+  useEffect(() => { localStorage.setItem('grace_invoices', JSON.stringify(invoices)); }, [invoices]);
+  useEffect(() => { localStorage.setItem('grace_staff', JSON.stringify(staff)); }, [staff]);
+  useEffect(() => { localStorage.setItem('grace_equipment', JSON.stringify(equipment)); }, [equipment]);
+  useEffect(() => { localStorage.setItem('grace_audit_logs', JSON.stringify(auditLogs)); }, [auditLogs]);
+  useEffect(() => { localStorage.setItem('grace_patients', JSON.stringify(patients)); }, [patients]);
+  useEffect(() => { localStorage.setItem('grace_sync_queue', JSON.stringify(syncQueue)); }, [syncQueue]);
 
   const logAction = (action: string, module: string) => {
     const newLog: AuditLog = {
