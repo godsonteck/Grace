@@ -335,7 +335,12 @@ export default function AdminPage() {
                     <div className="relative z-10 h-full flex flex-col">
                        <h3 className="text-2xl font-black italic tracking-tighter uppercase mb-12 flex items-center gap-3 underline decoration-primary decoration-4">Revenue Intel <Activity className="h-6 w-6 text-primary" /></h3>
                        <div className="space-y-12 flex-grow">
-                          {stats.branchBreakdown.filter(b => globalBranchFilter === "all" || b.name.toUpperCase() === branches.find(br => br.id === globalBranchFilter)?.name.includes("-") ? branches.find(br => br.id === globalBranchFilter)?.name.split("-")[1].trim().toUpperCase() : branches.find(br => br.id === globalBranchFilter)?.name.toUpperCase()).map((b, i) => (
+                          {stats.branchBreakdown.filter(b => {
+                            if (globalBranchFilter === "all") return true;
+                            const br = branches.find(branch => branch.id === globalBranchFilter);
+                            const name = br?.name.includes("-") ? br.name.split("-")[1].trim() : br?.name;
+                            return b.name.toUpperCase() === name?.toUpperCase();
+                          }).map((b, i) => (
                             <div key={i} className="space-y-4">
                                <div className="flex justify-between items-end">
                                   <p className="text-xs font-black uppercase tracking-[0.3em] text-slate-500 italic">{b.name}</p>

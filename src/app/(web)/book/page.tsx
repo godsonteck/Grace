@@ -43,24 +43,62 @@ function BookContent() {
   const handleNext = () => setStep(prev => prev + 1);
   const handleBack = () => setStep(prev => prev - 1);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      const newAppointment = {
-        id: `apt-${Date.now()}`,
-        ...formData,
-        scanName: selectedScan?.name || "Unknown Scan",
-        status: "pending",
-        createdAt: new Date().toISOString(),
-      };
+    try {
+      // 1. First Ensure Patient exists/is created
+      const patientRes = await fetch('/api/patients', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formData.patientName,
+          email: formData.patientEmail,
+          phone: formData.patientPhone,
+          dob: formData.patientDob,
+          gender: "Not Specified", // Default for now
+        }),
+      });
 
-      addAppointment(newAppointment);
+      const patient = await patientRes.json();
+
+      if (!patient.id) throw new Error("Failed to register patient");
+
+      // 2. Create Appointment
+      const appointmentRes = await fetch('/api/appointments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          patientId: patient.id,
+          branchId: formData.branchId,
+          scanId: formData.scanId,
+          scanName: selectedScan?.name || "Unknown Scan",
+          date: formData.date,
+          time: formData.time,
+          priority: formData.priority,
+          referringDoctor: formData.referringDoctor,
+          notes: formData.notes,
+        }),
+      });
+
+      if (!appointmentRes.ok) throw new Error("Failed to book appointment");
+
+      const newAppointment = await appointmentRes.json();
+
+      // Update local context for UI sync
+      addAppointment({
+        ...newAppointment,
+        patientName: formData.patientName, // Local display optimization
+      });
+
       setIsSubmitting(false);
       setIsSuccess(true);
-    }, 1500);
+    } catch (error) {
+      console.error("Booking Error:", error);
+      setIsSubmitting(false);
+      alert("Encountered a pipeline error. Please try again or contact support.");
+    }
   };
 
   if (isSuccess) {

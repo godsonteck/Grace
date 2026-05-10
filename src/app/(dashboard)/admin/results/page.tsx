@@ -28,14 +28,31 @@ export default function ResultsPage() {
     [appointments, searchTerm]
   );
 
-  const handleGenerateResult = (e: React.FormEvent) => {
+  const handleGenerateResult = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedApt || !resultContent) return;
 
-    // Generate secure Result ID
-    const resId = `GRC-${selectedApt.id.split('-')[1]}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
-    setGeneratedId(resId);
-    attachReport(selectedApt.id);
+    try {
+      const res = await fetch('/api/reports', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          appointmentId: selectedApt.id,
+          patientId: selectedApt.patientId || "legacy-patient", // Fallback for mock data
+          content: resultContent,
+          statFlag: selectedApt.priority === 'urgent',
+        }),
+      });
+
+      if (!res.ok) throw new Error("Failed to attest report");
+
+      const report = await res.json();
+      setGeneratedId(report.resultId);
+      attachReport(selectedApt.id);
+    } catch (error) {
+      console.error("Report Error:", error);
+      alert("Pipeline failure: Could not attest result.");
+    }
   };
 
   const closePortal = () => {
