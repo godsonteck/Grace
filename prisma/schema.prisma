@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -17,14 +14,14 @@ model Branch {
   phone        String
   email        String
   appointments Appointment[]
-  staff        Staff[]
   equipment    Equipment[]
+  staff        Staff[]
 }
 
 model Patient {
-  id           String              @id @default(cuid())
+  id           String             @id @default(cuid())
   name         String
-  email        String              @unique
+  email        String             @unique
   phone        String
   dob          DateTime
   gender       String
@@ -36,33 +33,35 @@ model Patient {
 model Appointment {
   id              String            @id @default(cuid())
   patientId       String
-  patient         Patient           @relation(fields: [patientId], references: [id])
   branchId        String
-  branch          Branch            @relation(fields: [branchId], references: [id])
   scanId          String
   scanName        String
   date            DateTime
   time            String
-  status          String            @default("pending") // pending, confirmed, completed, cancelled
-  priority        String            @default("normal")  // normal, urgent
+  status          String            @default("pending")
+  priority        String            @default("normal")
   referringDoctor String?
   notes           String?
-  report          DiagnosticReport?
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
+  branch          Branch            @relation(fields: [branchId], references: [id])
+  patient         Patient           @relation(fields: [patientId], references: [id])
+  report          DiagnosticReport?
 }
 
 model DiagnosticReport {
   id            String      @id @default(cuid())
   appointmentId String      @unique
-  appointment   Appointment @relation(fields: [appointmentId], references: [id])
   patientId     String
-  patient       Patient     @relation(fields: [patientId], references: [id])
   resultId      String      @unique @default(cuid())
   content       String
   imageUrl      String?
   statFlag      Boolean     @default(false)
+  type          String      @default("RADIOLOGY")
+  labValues     String?
   createdAt     DateTime    @default(now())
+  patient       Patient     @relation(fields: [patientId], references: [id])
+  appointment   Appointment @relation(fields: [appointmentId], references: [id])
 }
 
 model ReferralDoctor {
@@ -79,10 +78,10 @@ model Staff {
   name     String
   role     String
   branchId String
-  branch   Branch @relation(fields: [branchId], references: [id])
   phone    String
   email    String
   status   String @default("active")
+  branch   Branch @relation(fields: [branchId], references: [id])
 }
 
 model Equipment {
@@ -90,7 +89,15 @@ model Equipment {
   name            String
   type            String
   branchId        String
-  branch          Branch   @relation(fields: [branchId], references: [id])
   lastMaintenance DateTime
   status          String   @default("operational")
+  branch          Branch   @relation(fields: [branchId], references: [id])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  user      String
+  action    String
+  module    String
+  timestamp DateTime @default(now())
 }

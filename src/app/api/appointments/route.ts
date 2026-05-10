@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { AppointmentSchema } from '@/lib/validations';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -26,6 +27,12 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
+    const validation = AppointmentSchema.safeParse(body);
+
+    if (!validation.success) {
+      return NextResponse.json({ error: 'Invalid data', details: validation.error.format() }, { status: 400 });
+    }
+
     const {
       patientId,
       branchId,
@@ -36,7 +43,7 @@ export async function POST(request: Request) {
       priority,
       referringDoctor,
       notes
-    } = body;
+    } = validation.data;
 
     const appointment = await prisma.appointment.create({
       data: {
@@ -44,9 +51,9 @@ export async function POST(request: Request) {
         branchId,
         scanId,
         scanName,
-        date: new Date(date),
+        date,
         time,
-        priority: priority || 'normal',
+        priority,
         referringDoctor,
         notes,
         status: 'pending',
@@ -56,6 +63,6 @@ export async function POST(request: Request) {
     return NextResponse.json(appointment, { status: 201 });
   } catch (error) {
     console.error('API Error:', error);
-    return NextResponse.json({ error: 'Failed to create appointment' }, { status: 500 });
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

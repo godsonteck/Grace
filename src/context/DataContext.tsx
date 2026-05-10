@@ -99,15 +99,29 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => { localStorage.setItem('grace_patients', JSON.stringify(patients)); }, [patients]);
   useEffect(() => { localStorage.setItem('grace_sync_queue', JSON.stringify(syncQueue)); }, [syncQueue]);
 
-  const logAction = (action: string, module: string) => {
-    const newLog: AuditLog = {
-      id: `log-${Date.now()}`,
-      user: "System Admin",
+  const logAction = async (action: string, module: string) => {
+    const userSession = typeof window !== 'undefined' ? localStorage.getItem('grace_auth_session') : null;
+    const userName = userSession ? JSON.parse(userSession).name : "System Admin";
+
+    const newLog = {
+      user: userName,
       action,
-      timestamp: new Date().toLocaleString(),
       module
     };
-    setAuditLogs(prev => [newLog, ...prev].slice(0, 50));
+
+    // Optimistic UI update
+    const tempLog = { ...newLog, id: `log-${Date.now()}`, timestamp: new Date().toLocaleString() };
+    setAuditLogs(prev => [tempLog as any, ...prev].slice(0, 50));
+
+    try {
+      await fetch('/api/logs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newLog),
+      });
+    } catch (e) {
+      console.error("Failed to persist audit log", e);
+    }
   };
 
   const addToQueue = (action: string, payload: any) => {

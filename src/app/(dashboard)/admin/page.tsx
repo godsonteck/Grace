@@ -7,7 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import {
   LayoutDashboard, Plus, Search, Edit2, Trash2, DollarSign,
   Settings, Users, X, Save, Calendar, CheckCircle, Clock,
-  Printer, CreditCard, ShoppingCart, ArrowRight, RefreshCw, Wifi, WifiOff, BarChart3, TrendingUp, Monitor, HardDrive, ShieldCheck, ClipboardList, Briefcase, UserPlus, FileText, Activity, AlertTriangle, LogOut, Microscope, MapPin, ChevronDown, Stethoscope, AlertCircle
+  Printer, CreditCard, ShoppingCart, ArrowRight, RefreshCw, Wifi, WifiOff, BarChart3, TrendingUp, Monitor, HardDrive, ShieldCheck, ClipboardList, Briefcase, UserPlus, FileText, Activity, AlertTriangle, LogOut, Microscope, MapPin, ChevronDown, Stethoscope, AlertCircle, Beaker
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -201,6 +201,7 @@ export default function AdminPage() {
   const navItems = [
     { id: "dashboard", name: "Executive Suite", icon: LayoutDashboard, roles: ['ADMIN'] },
     { id: "reports", name: "Financial Intel", icon: BarChart3, roles: ['ADMIN'] },
+    { id: "lab-hub", name: "Laboratory Hub", icon: Beaker, roles: ['ADMIN', 'RADIOLOGIST'], path: "/admin/lab" },
     { id: "appointments", name: "Clinical Pipeline", icon: Microscope, badge: stats.pendingAppointments, roles: ['ADMIN', 'RADIOLOGIST'] },
     { id: "patients", name: "Patient EHR", icon: Users, roles: ['ADMIN', 'RADIOLOGIST'] },
     { id: "staff", name: "Human Capital", icon: Briefcase, roles: ['ADMIN'] },
@@ -228,6 +229,17 @@ export default function AdminPage() {
 
         <nav className="flex-grow p-6 space-y-1 overflow-y-auto custom-scrollbar">
           {filteredNav.map((item) => (
+            item.path ? (
+              <Link key={item.id} href={item.path} className={cn(
+                "w-full flex items-center justify-between px-5 py-4 rounded-[20px] transition-all duration-300",
+                "text-slate-500 hover:text-white hover:bg-slate-800/50"
+              )}>
+                <div className="flex items-center gap-4">
+                  <item.icon className="h-5 w-5" />
+                  <span className="text-sm font-bold uppercase tracking-widest text-[10px]">{item.name}</span>
+                </div>
+              </Link>
+            ) : (
             <button key={item.id} onClick={() => { setActiveTab(item.id); setSearchTerm(""); }} className={cn(
                 "w-full flex items-center justify-between px-5 py-4 rounded-[20px] transition-all duration-300",
                 activeTab === item.id ? "bg-primary text-white shadow-xl shadow-primary/20 scale-[1.02]" : "text-slate-500 hover:text-white hover:bg-slate-800/50"
@@ -240,6 +252,7 @@ export default function AdminPage() {
                 <span className={cn("text-[10px] font-black px-2 py-0.5 rounded-full", item.id === "inventory" ? "bg-orange-500" : "bg-red-500")}>{item.badge}</span>
               )}
             </button>
+            )
           ))}
         </nav>
 
