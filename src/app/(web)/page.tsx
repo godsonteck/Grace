@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
-import { scanTypes, branches } from "@/lib/data";
-import { ArrowRight, CheckCircle2, MapPin, Activity, ShieldCheck, Microscope } from "lucide-react";
+import { scanTypes, branches, businessInfo } from "@/lib/data";
+import { ArrowRight, CheckCircle2, MapPin, Activity, ShieldCheck, Microscope, Award } from "lucide-react";
 
 export default function Home() {
   return (
@@ -23,11 +23,27 @@ export default function Home() {
              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Regional Diagnostic excellence</span>
           </div>
           <h1 className="text-6xl md:text-8xl font-black mb-8 tracking-tighter italic uppercase leading-none">
-            Precision<br/><span className="text-primary not-italic">Diagnosis.</span>
+            {businessInfo.motto.split(" ").map((word, i) => (
+              <span key={i} className={i === 1 ? "text-primary not-italic" : ""}>
+                {word}{" "}
+                {i === 1 && <br/>}
+              </span>
+            ))}
           </h1>
           <p className="text-xl md:text-2xl mb-12 text-slate-300 font-medium max-w-3xl mx-auto leading-relaxed italic">
-            Harnessing state-of-the-art CT, X-Ray, and Ultrasound technology across our regional nodes in Ho, Achimota, Koforidua, and Tema.
+            Harnessing state-of-the-art CT, X-Ray, and Ultrasound technology across our regional nodes.
           </p>
+
+          <div className="bg-white/10 backdrop-blur-md border border-white/20 p-6 rounded-2xl mb-12 inline-flex items-center gap-6 text-left max-w-2xl mx-auto">
+            <div className="bg-primary p-4 rounded-xl">
+              <Award className="h-8 w-8 text-white" />
+            </div>
+            <div>
+              <h3 className="font-black text-white uppercase tracking-widest text-sm">Outstanding Customer Experience Award</h3>
+              <p className="text-slate-300 text-xs mt-1">Recognized for our commitment to patient care and diagnostic precision across Ghana.</p>
+            </div>
+          </div>
+
           <div className="flex flex-col sm:flex-row gap-6 justify-center">
             <Link
               href="/scans"
@@ -48,7 +64,7 @@ export default function Home() {
         <div className="absolute bottom-0 left-0 w-full bg-secondary/80 backdrop-blur-3xl border-t border-white/5 py-8">
            <div className="max-w-7xl mx-auto px-8 grid grid-cols-2 md:grid-cols-4 gap-12">
               {[
-                { label: "Active Nodes", val: "4", icon: MapPin },
+                { label: "Active Nodes", val: branches.length.toString(), icon: MapPin },
                 { label: "Uptime", val: "99.9%", icon: Activity },
                 { label: "Pipeline", val: "Active", icon: Microscope },
                 { label: "Security", val: "SSL-X", icon: ShieldCheck },
@@ -79,7 +95,7 @@ export default function Home() {
           </Link>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-          {scanTypes.map((type) => (
+          {scanTypes.slice(0, 6).map((type) => (
             <div key={type.id} className="group rounded-[45px] overflow-hidden hover:shadow-[0_40px_100px_rgba(0,0,0,0.1)] transition-all bg-white border border-slate-100">
               <div className="relative h-64">
                 <Image
@@ -99,7 +115,7 @@ export default function Home() {
                   href={`/scans?type=${type.id}`}
                   className="bg-slate-50 text-secondary px-8 py-4 rounded-full font-black uppercase tracking-widest text-[10px] inline-flex items-center gap-3 group-hover:bg-primary group-hover:text-white transition-all shadow-sm"
                 >
-                  View Node <ArrowRight className="h-3 w-3" />
+                  View Details <ArrowRight className="h-3 w-3" />
                 </Link>
               </div>
             </div>
@@ -162,7 +178,7 @@ export default function Home() {
               <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center mb-8 group-hover:bg-primary group-hover:text-white transition-all">
                 <MapPin className="h-6 w-6 text-primary group-hover:text-white" />
               </div>
-              <h3 className="text-2xl font-black mb-2 text-secondary tracking-tighter uppercase italic">{branch.name.split("-")[1]}</h3>
+              <h3 className="text-2xl font-black mb-2 text-secondary tracking-tighter uppercase italic">{branch.name.includes("-") ? branch.name.split("-")[1] : branch.name}</h3>
               <p className="text-slate-400 text-xs font-black uppercase tracking-widest leading-loose mt-4 italic">{branch.address}</p>
               <div className="mt-8 pt-8 border-t border-slate-50">
                  <p className="text-[10px] font-black text-primary uppercase tracking-widest italic">{branch.phone}</p>

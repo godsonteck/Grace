@@ -7,7 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import {
   LayoutDashboard, Plus, Search, Edit2, Trash2, DollarSign,
   Settings, Users, X, Save, Calendar, CheckCircle, Clock,
-  Printer, CreditCard, ShoppingCart, ArrowRight, RefreshCw, Wifi, WifiOff, BarChart3, TrendingUp, Monitor, HardDrive, ShieldCheck, ClipboardList, Briefcase, UserPlus, FileText, Activity, AlertTriangle, LogOut, Microscope, MapPin, ChevronDown
+  Printer, CreditCard, ShoppingCart, ArrowRight, RefreshCw, Wifi, WifiOff, BarChart3, TrendingUp, Monitor, HardDrive, ShieldCheck, ClipboardList, Briefcase, UserPlus, FileText, Activity, AlertTriangle, LogOut, Microscope, MapPin, ChevronDown, Stethoscope, AlertCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -116,6 +116,10 @@ export default function AdminPage() {
       const matchesSearch = a.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            a.scanName.toLowerCase().includes(searchTerm.toLowerCase());
       return matchesBranch && matchesSearch;
+    }).sort((a, b) => {
+      if (a.priority === "urgent" && b.priority !== "urgent") return -1;
+      if (a.priority !== "urgent" && b.priority === "urgent") return 1;
+      return 0;
     }),
     [appointments, globalBranchFilter, searchTerm]
   );
@@ -188,7 +192,7 @@ export default function AdminPage() {
       xrRev: paidInvoices.filter(i => i.scanName.toLowerCase().includes("x-ray") || i.scanName.toLowerCase().includes("xr")).reduce((acc, curr) => acc + curr.amount, 0),
       usRev: paidInvoices.filter(i => i.scanName.toLowerCase().includes("ultrasound") || i.scanName.toLowerCase().includes("us")).reduce((acc, curr) => acc + curr.amount, 0),
       branchBreakdown: branches.map(b => ({
-        name: b.name.split("-")[1].trim(),
+        name: b.name.includes("-") ? b.name.split("-")[1].trim() : b.name,
         rev: filteredInvoices.filter(i => i.branchName === b.name && i.status === "paid").reduce((acc, curr) => acc + curr.amount, 0)
       }))
     };
@@ -269,7 +273,7 @@ export default function AdminPage() {
                <div className="p-3 bg-white rounded-2xl shadow-sm text-primary"><MapPin className="h-4 w-4" /></div>
                <select className="bg-transparent border-none outline-none pr-8 font-black text-[10px] uppercase tracking-widest text-slate-500 appearance-none cursor-pointer" value={globalBranchFilter} onChange={(e) => setGlobalBranchFilter(e.target.value)}>
                   <option value="all">Global (All Centers)</option>
-                  {branches.map(b => <option key={b.id} value={b.id}>{b.name.split("-")[1].trim()}</option>)}
+                  {branches.map(b => <option key={b.id} value={b.id}>{b.name.includes("-") ? b.name.split("-")[1].trim().toUpperCase() : b.name.toUpperCase()}</option>)}
                </select>
             </div>
           </div>
@@ -316,7 +320,7 @@ export default function AdminPage() {
                                </div>
                                <div>
                                   <p className="font-black text-secondary text-base italic uppercase">{e.name}</p>
-                                  <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mt-1">{e.type} • {branches.find(b => b.id === e.branchId)?.name.split("-")[1]}</p>
+                                  <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mt-1">{e.type} • {branches.find(b => b.id === e.branchId)?.name.includes("-") ? branches.find(b => b.id === e.branchId)?.name.split("-")[1].trim() : branches.find(b => b.id === e.branchId)?.name}</p>
                                </div>
                             </div>
                             <span className={cn("text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full border", e.status === "operational" ? "bg-green-50 text-green-600 border-green-100" : "bg-orange-50 text-orange-600 border-orange-100")}>{e.status}</span>
@@ -331,7 +335,7 @@ export default function AdminPage() {
                     <div className="relative z-10 h-full flex flex-col">
                        <h3 className="text-2xl font-black italic tracking-tighter uppercase mb-12 flex items-center gap-3 underline decoration-primary decoration-4">Revenue Intel <Activity className="h-6 w-6 text-primary" /></h3>
                        <div className="space-y-12 flex-grow">
-                          {stats.branchBreakdown.filter(b => globalBranchFilter === "all" || b.name === branches.find(br => br.id === globalBranchFilter)?.name.split("-")[1].trim()).map((b, i) => (
+                          {stats.branchBreakdown.filter(b => globalBranchFilter === "all" || b.name.toUpperCase() === branches.find(br => br.id === globalBranchFilter)?.name.includes("-") ? branches.find(br => br.id === globalBranchFilter)?.name.split("-")[1].trim().toUpperCase() : branches.find(br => br.id === globalBranchFilter)?.name.toUpperCase()).map((b, i) => (
                             <div key={i} className="space-y-4">
                                <div className="flex justify-between items-end">
                                   <p className="text-xs font-black uppercase tracking-[0.3em] text-slate-500 italic">{b.name}</p>
@@ -411,26 +415,40 @@ export default function AdminPage() {
                           <th className="px-12 py-8">Case ID</th>
                           <th className="px-12 py-8">Clinical Group</th>
                           <th className="px-12 py-8 text-center">Verification Status</th>
-                          <th className="px-12 py-8 text-right">Settlement</th>
+                          <th className="px-12 py-8 text-right">Ops</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-50">
                         {filteredAppointments.map(apt => (
-                          <tr key={apt.id} className="hover:bg-primary/[0.01] transition-all group">
+                          <tr key={apt.id} className={cn("hover:bg-primary/[0.01] transition-all group", apt.priority === 'urgent' && "bg-red-50/30")}>
                             <td className="px-12 py-8">
-                               <p className="font-black text-secondary text-base italic uppercase underline decoration-slate-100 group-hover:decoration-primary group-hover:text-primary transition-all">{apt.patientName}</p>
-                               <div className="flex items-center gap-2 mt-2">
-                                  <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">{branches.find(b => b.id === apt.branchId)?.name.split("-")[1]}</span>
-                                  <span className="text-slate-200">•</span>
-                                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest italic">{apt.date}</span>
+                               <div className="flex items-center gap-4">
+                                  {apt.priority === 'urgent' && <AlertCircle className="h-5 w-5 text-red-500 animate-pulse" />}
+                                  <div>
+                                     <p className="font-black text-secondary text-base italic uppercase underline decoration-slate-100 group-hover:decoration-primary group-hover:text-primary transition-all">{apt.patientName}</p>
+                                     <div className="flex items-center gap-2 mt-2">
+                                        <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">{branches.find(b => b.id === apt.branchId)?.name.includes("-") ? branches.find(b => b.id === apt.branchId)?.name.split("-")[1].trim() : branches.find(b => b.id === apt.branchId)?.name}</span>
+                                        <span className="text-slate-200">•</span>
+                                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest italic">{apt.date}</span>
+                                        {apt.referringDoctor && (
+                                          <>
+                                            <span className="text-slate-200">•</span>
+                                            <span className="text-[9px] font-black text-primary uppercase tracking-widest italic flex items-center gap-1"><Stethoscope className="h-3 w-3" /> {apt.referringDoctor}</span>
+                                          </>
+                                        )}
+                                     </div>
+                                  </div>
                                </div>
                             </td>
-                            <td className="px-12 py-8"><span className="text-xs font-black uppercase tracking-[0.1em] text-slate-500 italic">{apt.scanName}</span></td>
+                            <td className="px-12 py-8">
+                               <span className="text-xs font-black uppercase tracking-[0.1em] text-slate-500 italic">{apt.scanName}</span>
+                               {apt.priority === 'urgent' && <span className="ml-3 px-2 py-0.5 bg-red-100 text-red-600 text-[8px] font-black uppercase tracking-widest rounded-full">STAT</span>}
+                            </td>
                             <td className="px-12 py-8 text-center">
                                {apt.reportAttached ? (
                                  <span className="inline-flex items-center gap-3 text-green-600 text-[10px] font-black uppercase italic"><ShieldCheck className="h-5 w-5" /> Result Attested</span>
                                ) : (
-                                 <button onClick={() => handleOpenReportModal(apt)} className="text-primary hover:text-secondary bg-primary/5 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] transition-all border border-primary/10">Verification Pending</button>
+                                 <button onClick={() => handleOpenReportModal(apt)} className={cn("hover:text-secondary px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] transition-all border", apt.priority === 'urgent' ? "bg-red-500 text-white border-red-600" : "bg-primary/5 text-primary border-primary/10")}>Verification Pending</button>
                                )}
                             </td>
                             <td className="px-12 py-8 text-right">
@@ -491,7 +509,7 @@ export default function AdminPage() {
                                 <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.1em] mt-1">{s.email}</p>
                              </td>
                              <td className="px-12 py-8 text-center"><span className="text-xs font-black uppercase tracking-widest text-slate-500 bg-slate-100 px-4 py-1.5 rounded-full border border-slate-200">{s.role}</span></td>
-                             <td className="px-12 py-8 text-center text-xs font-black text-primary italic uppercase tracking-tighter">{branches.find(b => b.id === s.branchId)?.name.split("-")[1]}</td>
+                             <td className="px-12 py-8 text-center text-xs font-black text-primary italic uppercase tracking-tighter">{branches.find(b => b.id === s.branchId)?.name.includes("-") ? branches.find(b => b.id === s.branchId)?.name.split("-")[1].trim() : branches.find(b => b.id === s.branchId)?.name}</td>
                              <td className="px-12 py-8 text-right">
                                 <div className="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
                                    <button onClick={() => handleOpenStaffModal(s)} className="p-4 bg-white border shadow-sm rounded-2xl hover:bg-primary hover:text-white transition-all"><Edit2 className="h-4 w-4" /></button>
@@ -616,7 +634,7 @@ export default function AdminPage() {
                       <div className="space-y-6">
                         <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.6em] ml-8 italic font-black">Node</label>
                         <select className="w-full px-12 py-10 rounded-[50px] border-4 border-slate-50 focus:border-primary outline-none font-black text-xl bg-white appearance-none italic shadow-sm tracking-tighter" value={staffForm.branchId} onChange={e => setStaffForm({...staffForm, branchId: e.target.value})}>
-                           {branches.map(b => <option key={b.id} value={b.id}>{b.name.split("-")[1].trim().toUpperCase()}</option>)}
+                           {branches.map(b => <option key={b.id} value={b.id}>{b.name.includes("-") ? b.name.split("-")[1].trim().toUpperCase() : b.name.toUpperCase()}</option>)}
                         </select>
                       </div>
                       <div className="space-y-6">
@@ -658,7 +676,7 @@ export default function AdminPage() {
                        <div className="space-y-6">
                           <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.6em] ml-8 italic font-black">Node</label>
                           <select className="w-full px-12 py-10 rounded-[50px] border-4 border-slate-50 focus:border-primary outline-none font-black text-xl bg-white appearance-none italic shadow-sm tracking-tighter" value={equipForm.branchId} onChange={e => setEquipForm({...equipForm, branchId: e.target.value})}>
-                             {branches.map(b => <option key={b.id} value={b.id}>{b.name.split("-")[1].trim().toUpperCase()}</option>)}
+                             {branches.map(b => <option key={b.id} value={b.id}>{b.name.includes("-") ? b.name.split("-")[1].trim().toUpperCase() : b.name.toUpperCase()}</option>)}
                           </select>
                        </div>
                        <div className="space-y-6">
