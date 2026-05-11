@@ -15,7 +15,7 @@ export function authorize(request: Request, allowedRoles: UserRole[]) {
       return { authorized: false, response: NextResponse.json({ error: 'Access denied' }, { status: 403 }) };
     }
     return { authorized: true, user: session };
-  } catch (e) {
+  } catch {
     return { authorized: false, response: NextResponse.json({ error: 'Invalid session' }, { status: 401 }) };
   }
 }

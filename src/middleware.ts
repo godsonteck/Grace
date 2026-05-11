@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/request';
+import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -9,17 +9,15 @@ export function middleware(request: NextRequest) {
   const isProtected = protectedPrefixes.some(prefix => pathname.startsWith(prefix));
 
   if (isProtected) {
-    // In a real app, we would verify a JWT or session cookie here.
-    // Since we are using localStorage for auth in this mock setup,
-    // we'll check for a custom header that our frontend can send
-    // or rely on the frontend redirection.
-    // For this simulation, we'll check for the 'x-auth-session' header.
-    const authSession = request.headers.get('x-auth-session');
+    // In a production environment, use a secure HTTP-only cookie for session management.
+    // Here we check for 'grace_auth_session' which the AuthContext sets in localStorage.
+    // Note: middleware cannot access localStorage, so in a real app we'd use a cookie.
+    const authSession = request.cookies.get('grace_auth_session');
 
     if (!authSession && !pathname.includes('/login')) {
-      // Allow bypass for development/testing if needed, but in production, redirect.
-      // For this task, we will just allow it to proceed but log the lack of session.
-      console.log(`[Middleware] Unauthorized access attempt to ${pathname}`);
+      const url = request.nextUrl.clone();
+      url.pathname = '/login';
+      return NextResponse.redirect(url);
     }
   }
 

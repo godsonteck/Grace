@@ -2,9 +2,9 @@
 
 import { useState, useMemo, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { scanTypes, branches, BodyPart } from "@/lib/data";
 import { useData } from "@/context/DataContext";
-import { Calendar, Clock, User, Mail, Phone, FileText, CheckCircle2, ArrowRight, ShieldCheck, AlertCircle, Stethoscope } from "lucide-react";
+import { branches, scanTypes } from "@/lib/data";
+import { CheckCircle2, ShieldCheck, Stethoscope, User, FileText, ArrowRight, AlertCircle, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 function BookContent() {

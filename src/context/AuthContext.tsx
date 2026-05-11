@@ -44,6 +44,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
     setUser(mockUser);
     localStorage.setItem('grace_auth_session', JSON.stringify(mockUser));
+    // Set a cookie for the middleware to read
+    document.cookie = `grace_auth_session=${JSON.stringify(mockUser)}; path=/; samesite=strict`;
 
     if (role === 'CASHIER') router.push('/pos');
     else router.push('/admin');
@@ -52,6 +54,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => {
     setUser(null);
     localStorage.removeItem('grace_auth_session');
+    document.cookie = "grace_auth_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
     router.push('/login');
   };
 

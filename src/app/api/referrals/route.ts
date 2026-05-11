@@ -7,7 +7,7 @@ export async function GET() {
       orderBy: { createdAt: 'desc' },
     });
     return NextResponse.json(referrals);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to fetch referrals' }, { status: 500 });
   }
 }
@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json(referral, { status: 201 });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to create referral' }, { status: 500 });
   }
 }

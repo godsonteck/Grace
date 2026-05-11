@@ -1,18 +1,31 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useData } from "@/context/DataContext";
-import { branches } from "@/lib/data";
 import {
-  Stethoscope, Search, Plus, Filter, ArrowRight,
-  MapPin, Phone, Mail, User, ShieldCheck, X
+  Stethoscope, Plus, ShieldCheck, X, Search, Filter, ArrowRight
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 export default function ReferralsPage() {
-  const { appointments, auditLogs } = useData();
+  const { appointments } = useData();
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [partners, setPartners] = useState<any[]>([]);
+  const [formData, setFormData] = useState({ name: "", facility: "", phone: "", email: "" });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const fetchPartners = async () => {
+    try {
+      const res = await fetch('/api/referrals');
+      if (res.ok) setPartners(await res.json());
+    } catch (_error) {
+      console.error("Failed to fetch partner directory.");
+    }
+  };
+
+  useEffect(() => {
+    fetchPartners();
+  }, []);
 
   const referralStats = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -27,10 +40,41 @@ export default function ReferralsPage() {
       .sort((a, b) => b.count - a.count);
   }, [appointments]);
 
-  const filteredReferrals = useMemo(() =>
-    referralStats.filter(r => r.name.toLowerCase().includes(searchTerm.toLowerCase())),
-    [referralStats, searchTerm]
-  );
+  const handleEnroll = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      const res = await fetch('/api/referrals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+      if (res.ok) {
+        fetchPartners();
+        setIsModalOpen(false);
+        setFormData({ name: "", facility: "", phone: "", email: "" });
+      }
+    } catch (_error) {
+       alert("Failed to enroll partner.");
+    } finally {
+       setIsSubmitting(false);
+    }
+  };
+
+  const filteredReferrals = useMemo(() => {
+    const registry = partners.map(p => ({
+      name: p.name,
+      facility: p.facility,
+      count: referralStats.find(s => s.name === p.name)?.count || 0,
+      phone: p.phone,
+      email: p.email
+    }));
+
+    return registry.filter(r =>
+      r.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      r.facility?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [partners, referralStats, searchTerm]);
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] p-10 font-sans">
@@ -94,6 +138,7 @@ export default function ReferralsPage() {
                        <tr className="bg-slate-50 text-[10px] font-black uppercase text-slate-400 tracking-[0.3em]">
                           <th className="px-12 py-8">Practitioner</th>
                           <th className="px-12 py-8 text-center">Case Volume</th>
+                          <th className="px-12 py-8 text-center">Contact Node</th>
                           <th className="px-12 py-8 text-right">Integrity</th>
                        </tr>
                     </thead>
@@ -102,15 +147,19 @@ export default function ReferralsPage() {
                          <tr key={i} className="hover:bg-primary/[0.01] transition-all group">
                             <td className="px-12 py-8">
                                <p className="font-black text-secondary text-base italic uppercase">{r.name}</p>
-                               <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">Medical Professional Partner</p>
+                               <p className="text-[10px] font-black text-primary uppercase tracking-[0.1em] mt-1">{r.facility || "Independent Clinic"}</p>
                             </td>
                             <td className="px-12 py-8 text-center">
                                <span className="text-2xl font-black text-primary italic tracking-tighter">{r.count}</span>
                                <span className="ml-2 text-[9px] font-black text-slate-300 uppercase tracking-widest">Units</span>
                             </td>
+                            <td className="px-12 py-8 text-center">
+                               <p className="text-xs font-black text-slate-500 uppercase italic">{r.phone || "N/A"}</p>
+                               <p className="text-[9px] text-slate-300 font-bold lowercase">{r.email || "no-sync@clinical.node"}</p>
+                            </td>
                             <td className="px-12 py-8 text-right">
                                <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 text-green-600 rounded-xl text-[9px] font-black uppercase italic border border-green-100">
-                                  <ShieldCheck className="h-4 w-4" /> Verified
+                                  <ShieldCheck className="h-4 w-4" /> Verified Partner
                                </div>
                             </td>
                          </tr>
@@ -136,17 +185,37 @@ export default function ReferralsPage() {
                 </div>
                 <button onClick={() => setIsModalOpen(false)} className="p-6 bg-white rounded-3xl shadow-xl text-slate-300 hover:text-red-500 transition-all border border-slate-100"><X className="h-8 w-8" /></button>
              </div>
-             <form className="p-16 space-y-12">
-                <div className="space-y-6">
-                   <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.6em] ml-8 italic font-black">Practitioner Name</label>
-                   <input required type="text" className="w-full px-12 py-8 rounded-[40px] border-4 border-slate-50 focus:border-primary outline-none text-2xl font-black italic shadow-inner bg-slate-50/30 tracking-tighter" placeholder="DR. SAMUEL..." />
+             <form onSubmit={handleEnroll} className="p-16 space-y-12">
+                <div className="grid grid-cols-2 gap-8">
+                   <div className="space-y-4">
+                      <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.6em] ml-8 italic font-black">Practitioner Name</label>
+                      <input required type="text" className="w-full px-8 py-6 rounded-[30px] border-4 border-slate-50 focus:border-primary outline-none text-lg font-black italic shadow-inner bg-slate-50/30 tracking-tighter" placeholder="DR. SAMUEL..." value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                   </div>
+                   <div className="space-y-4">
+                      <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.6em] ml-8 italic font-black">Medical Facility</label>
+                      <input required type="text" className="w-full px-8 py-6 rounded-[30px] border-4 border-slate-50 focus:border-primary outline-none text-lg font-black italic shadow-inner bg-slate-50/30 tracking-tighter" placeholder="GENERAL HOSPITAL..." value={formData.facility} onChange={e => setFormData({...formData, facility: e.target.value})} />
+                   </div>
                 </div>
-                <div className="space-y-6">
-                   <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.6em] ml-8 italic font-black">Medical Facility</label>
-                   <input required type="text" className="w-full px-12 py-8 rounded-[40px] border-4 border-slate-50 focus:border-primary outline-none text-2xl font-black italic shadow-inner bg-slate-50/30 tracking-tighter" placeholder="GENERAL HOSPITAL..." />
+                <div className="grid grid-cols-2 gap-8">
+                   <div className="space-y-4">
+                      <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.6em] ml-8 italic font-black">Contact Node (Phone)</label>
+                      <input required type="text" className="w-full px-8 py-6 rounded-[30px] border-4 border-slate-50 focus:border-primary outline-none text-lg font-black italic shadow-inner bg-slate-50/30 tracking-tighter" placeholder="0555..." value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
+                   </div>
+                   <div className="space-y-4">
+                      <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.6em] ml-8 italic font-black">Electronic Node (Email)</label>
+                      <input required type="email" className="w-full px-8 py-6 rounded-[30px] border-4 border-slate-50 focus:border-primary outline-none text-lg font-black italic shadow-inner bg-slate-50/30 tracking-tighter" placeholder="dr@clinic.node" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+                   </div>
                 </div>
-                <button type="submit" onClick={(e) => { e.preventDefault(); setIsModalOpen(false); }} className="w-full bg-secondary text-white py-10 rounded-[45px] font-black uppercase tracking-[0.3em] text-xl flex items-center justify-center gap-6 hover:bg-primary transition-all shadow-2xl active:scale-95 italic">
-                   <ShieldCheck className="h-10 w-10 text-primary" /> Attest Partner
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full bg-secondary text-white py-10 rounded-[45px] font-black uppercase tracking-[0.3em] text-xl flex items-center justify-center gap-6 hover:bg-primary transition-all shadow-2xl active:scale-95 italic"
+                >
+                   {isSubmitting ? "ATTESTING..." : (
+                     <>
+                        <ShieldCheck className="h-10 w-10 text-primary" /> Attest Partner
+                     </>
+                   )}
                 </button>
              </form>
           </div>

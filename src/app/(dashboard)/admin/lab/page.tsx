@@ -4,14 +4,12 @@ import { useState, useMemo } from "react";
 import { useData } from "@/context/DataContext";
 import { branches } from "@/lib/data";
 import {
-  Beaker, Search, Plus, Filter, ArrowRight,
-  MapPin, Phone, Mail, User, ShieldCheck, X, Microscope, Download, ExternalLink, AlertCircle, Save, CheckCircle
+  Beaker, Plus, ShieldCheck, X, Download, CheckCircle
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 export default function LabResultsPage() {
   const { appointments, attachReport } = useData();
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm] = useState("");
   const [selectedApt, setSelectedApt] = useState<any>(null);
   const [labFields, setLabFields] = useState([{ name: "", value: "", unit: "", reference: "" }]);
   const [generatedId, setGeneratedId] = useState("");
@@ -67,8 +65,7 @@ export default function LabResultsPage() {
       const report = await res.json();
       setGeneratedId(report.resultId);
       attachReport(selectedApt.id);
-    } catch (error) {
-      console.error("Lab Error:", error);
+    } catch (_error) {
       alert("Pipeline failure: Could not attest laboratory result.");
     } finally {
       setIsSubmitting(false);

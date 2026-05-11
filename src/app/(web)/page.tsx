@@ -158,6 +158,56 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Testimonials */}
+      <section className="py-32 bg-slate-50">
+         <div className="max-w-7xl mx-auto px-8">
+            <div className="text-center mb-20">
+               <h2 className="text-5xl font-black text-secondary tracking-tighter uppercase italic">Patient <span className="text-primary not-italic">Intel</span></h2>
+               <p className="text-slate-400 italic mt-4 uppercase tracking-[0.2em] text-[10px] font-black">Clinical Feedback Registry</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+               {[
+                 { name: "Kwadwo Mensah", role: "Cardiac Patient", text: "The speed of my Echocardiogram results was phenomenal. Grace Diagnostic truly lives up to their motto of being fast and clear." },
+                 { name: "Akua Owusu", role: "Health Screening", text: "Outstanding customer experience at the Tantra Hills branch. The staff were professional and the facility was state-of-the-art." },
+                 { name: "Dr. Seth Appiah", role: "Referring Clinician", text: "I refer all my CT scan patients here because I trust the accuracy of their imaging and the expertise of their radiologists." },
+               ].map((t, i) => (
+                 <div key={i} className="bg-white p-12 rounded-[50px] shadow-xl border border-slate-100 italic relative group">
+                    <div className="absolute -top-6 left-12 w-12 h-12 bg-primary rounded-2xl flex items-center justify-center text-white shadow-lg shadow-primary/20 group-hover:rotate-12 transition-transform">
+                       <CheckCircle2 className="h-6 w-6" />
+                    </div>
+                    <p className="text-slate-500 mb-8 leading-relaxed font-medium">&quot;{t.text}&quot;</p>
+                    <div>
+                       <p className="font-black text-secondary uppercase tracking-tighter text-lg">{t.name}</p>
+                       <p className="text-[10px] font-black text-primary uppercase tracking-widest mt-1">{t.role}</p>
+                    </div>
+                 </div>
+               ))}
+            </div>
+         </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section className="py-32">
+         <div className="max-w-4xl mx-auto px-8">
+            <div className="text-center mb-20">
+               <h2 className="text-5xl font-black text-secondary tracking-tighter uppercase italic underline decoration-primary decoration-8 underline-offset-8">Information Hub</h2>
+            </div>
+            <div className="space-y-6">
+               {[
+                 { q: "How fast can I get my X-ray results?", a: "We often deliver Digital X-ray results in less than 1 hour, prioritizing efficiency for all our patients." },
+                 { q: "Do I need an appointment for a lab test?", a: "Walk-ins are welcome for laboratory tests, though booking an appointment can help minimize your wait time." },
+                 { q: "Which branches offer CT Scans?", a: "CT Scanning is currently available at our Accra (Main) branch at Tantra Hills." },
+                 { q: "How can I access my results online?", a: "Use the 'Retrieve Results' portal on our website with the unique Result ID provided at the center." },
+               ].map((faq, i) => (
+                 <div key={i} className="group p-8 rounded-[35px] bg-white border-2 border-slate-50 hover:border-primary transition-all shadow-sm">
+                    <h4 className="text-xl font-black text-secondary uppercase italic tracking-tighter mb-4 group-hover:text-primary transition-colors">Q: {faq.q}</h4>
+                    <p className="text-slate-500 italic leading-relaxed">A: {faq.a}</p>
+                 </div>
+               ))}
+            </div>
+         </div>
+      </section>
+
       {/* Branches Highlight */}
       <section className="max-w-7xl mx-auto px-8 w-full py-20">
         <div className="flex flex-col md:flex-row justify-between items-end mb-20 gap-8">

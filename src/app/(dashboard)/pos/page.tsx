@@ -1,20 +1,18 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { scanTypes, branches, BodyPart, Invoice } from "@/lib/data";
 import { useData } from "@/context/DataContext";
 import { useAuth } from "@/context/AuthContext";
+import { branches, Invoice } from "@/lib/data";
 import {
-  Plus, Search, DollarSign, X, ShoppingCart,
-  ArrowRight, CreditCard, Printer, User, Activity, Wifi, WifiOff, RefreshCw, ChevronLeft, ShieldCheck, CheckCircle2, Lock, Key, LogOut, Receipt, TrendingUp
+  Plus, X, ChevronLeft, ShieldCheck, CheckCircle2, Lock, Key, Receipt, TrendingUp, ArrowRight, CreditCard, Printer, Search, ShoppingCart
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 export default function POSPage() {
   const {
-    records, invoices, isOnline, isSyncing,
-    addInvoice, payInvoice
+    records, invoices, payInvoice, addInvoice
   } = useData();
 
   const { user, logout } = useAuth();

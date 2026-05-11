@@ -19,7 +19,7 @@ export async function GET(request: Request) {
       },
     });
     return NextResponse.json(appointments);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to fetch appointments' }, { status: 500 });
   }
 }
@@ -45,6 +45,10 @@ export async function POST(request: Request) {
       notes
     } = validation.data;
 
+    if (!patientId) {
+      return NextResponse.json({ error: 'Patient ID is required' }, { status: 400 });
+    }
+
     const appointment = await prisma.appointment.create({
       data: {
         patientId,
@@ -61,8 +65,8 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json(appointment, { status: 201 });
-  } catch (error) {
-    console.error('API Error:', error);
+  } catch {
+    console.error("API Error");
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

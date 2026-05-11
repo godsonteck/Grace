@@ -1,20 +1,19 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { scanTypes, branches, BodyPart, Invoice, Staff, Equipment, Appointment, Patient } from "@/lib/data";
 import { useData } from "@/context/DataContext";
 import { useAuth } from "@/context/AuthContext";
+import { branches } from "@/lib/data";
 import {
-  LayoutDashboard, Plus, Search, Edit2, Trash2, DollarSign,
-  Settings, Users, X, Save, Calendar, CheckCircle, Clock,
-  Printer, CreditCard, ShoppingCart, ArrowRight, RefreshCw, Wifi, WifiOff, BarChart3, TrendingUp, Monitor, HardDrive, ShieldCheck, ClipboardList, Briefcase, UserPlus, FileText, Activity, AlertTriangle, LogOut, Microscope, MapPin, ChevronDown, Stethoscope, AlertCircle, Beaker
+  LayoutDashboard, Plus, Edit2, Trash2,
+  Settings, X, CheckCircle, TrendingUp, Monitor, HardDrive, ShieldCheck, ClipboardList, Briefcase, Stethoscope, Beaker, Search, MapPin, RefreshCw, Users, AlertCircle, FileText, UserPlus, Activity, ArrowRight, Microscope
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 export default function AdminPage() {
   const {
-    records, appointments, invoices, staff, equipment, auditLogs, patients, isOnline, isSyncing,
+    records, appointments, invoices, staff, equipment, auditLogs, patients, isSyncing,
     addRecord, updateRecord, deleteRecord,
     updateAppointment, attachReport, addStaff, updateStaff, deleteStaff, addEquipment, updateEquipment, deleteEquipment,
     addPatient, updatePatient, syncData
@@ -33,12 +32,12 @@ export default function AdminPage() {
 
   // Form States
   const [recordForm, setRecordRecordForm] = useState({ name: "", scanTypeId: "ct-scan", category: "General", price: 0, duration: "20 mins", preparation: "" });
-  const [staffForm, setStaffForm] = useState<Staff>({ id: "", name: "", role: "Radiologist", branchId: branches[0].id, phone: "", email: "", status: "active" });
-  const [equipForm, setEquipForm] = useState<Equipment>({ id: "", name: "", type: "CT Scanner", branchId: branches[0].id, lastMaintenance: "", status: "operational" });
-  const [patientForm, setPatientForm] = useState<Patient>({ id: "", name: "", email: "", phone: "", dob: "", gender: "Male", bloodGroup: "O+", history: [] });
+  const [staffForm, setStaffForm] = useState<any>({ id: "", name: "", role: "Radiologist", branchId: branches[0].id, phone: "", email: "", status: "active" });
+  const [equipForm, setEquipForm] = useState<any>({ id: "", name: "", type: "CT Scanner", branchId: branches[0].id, lastMaintenance: "", status: "operational" });
+  const [patientForm, setPatientForm] = useState<any>({ id: "", name: "", email: "", phone: "", dob: "", gender: "Male", bloodGroup: "O+", history: [] });
   const [reportContent, setReportContent] = useState("");
 
-  const handleOpenStaffModal = (member?: Staff) => {
+  const handleOpenStaffModal = (member?: any) => {
     setModalType("staff");
     if (member) {
       setEditingItem(member);
@@ -50,7 +49,7 @@ export default function AdminPage() {
     setIsModalOpen(true);
   };
 
-  const handleOpenEquipModal = (item?: Equipment) => {
+  const handleOpenEquipModal = (item?: any) => {
     setModalType("equipment");
     if (item) {
       setEditingItem(item);
@@ -62,7 +61,7 @@ export default function AdminPage() {
     setIsModalOpen(true);
   };
 
-  const handleOpenRecordModal = (record?: BodyPart) => {
+  const handleOpenRecordModal = (record?: any) => {
     setModalType("record");
     if (record) {
       setEditingItem(record);
@@ -74,7 +73,7 @@ export default function AdminPage() {
     setIsModalOpen(true);
   };
 
-  const handleOpenPatientModal = (pt?: Patient) => {
+  const handleOpenPatientModal = (pt?: any) => {
     setModalType("patient");
     if (pt) {
       setEditingItem(pt);
@@ -86,7 +85,7 @@ export default function AdminPage() {
     setIsModalOpen(true);
   };
 
-  const handleOpenReportModal = (apt: Appointment) => {
+  const handleOpenReportModal = (apt: any) => {
     setModalType("report");
     setEditingItem(apt);
     setReportContent("");
@@ -200,9 +199,10 @@ export default function AdminPage() {
 
   const navItems = [
     { id: "dashboard", name: "Executive Suite", icon: LayoutDashboard, roles: ['ADMIN'] },
-    { id: "reports", name: "Financial Intel", icon: BarChart3, roles: ['ADMIN'] },
+    { id: "reports", name: "Financial Intel", icon: TrendingUp, roles: ['ADMIN'] },
+    { id: "analytics", name: "Clinical Analytics", icon: Activity, roles: ['ADMIN'], path: "/admin/analytics" },
     { id: "lab-hub", name: "Laboratory Hub", icon: Beaker, roles: ['ADMIN', 'RADIOLOGIST'], path: "/admin/lab" },
-    { id: "appointments", name: "Clinical Pipeline", icon: Microscope, badge: stats.pendingAppointments, roles: ['ADMIN', 'RADIOLOGIST'] },
+    { id: "appointments", name: "Clinical Pipeline", icon: ClipboardList, badge: stats.pendingAppointments, roles: ['ADMIN', 'RADIOLOGIST'] },
     { id: "patients", name: "Patient EHR", icon: Users, roles: ['ADMIN', 'RADIOLOGIST'] },
     { id: "staff", name: "Human Capital", icon: Briefcase, roles: ['ADMIN'] },
     { id: "inventory", name: "Asset Registry", icon: HardDrive, badge: stats.equipmentAlerts, roles: ['ADMIN', 'RADIOLOGIST'] },
@@ -228,7 +228,7 @@ export default function AdminPage() {
         </div>
 
         <nav className="flex-grow p-6 space-y-1 overflow-y-auto custom-scrollbar">
-          {filteredNav.map((item) => (
+          {filteredNav.map((item: any) => (
             item.path ? (
               <Link key={item.id} href={item.path} className={cn(
                 "w-full flex items-center justify-between px-5 py-4 rounded-[20px] transition-all duration-300",
@@ -300,10 +300,10 @@ export default function AdminPage() {
             <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                 {[
-                  { label: "Aggregate Revenue", value: `$${stats.totalRevenue.toLocaleString()}`, icon: DollarSign, color: "text-green-600", bg: "bg-green-50" },
+                  { label: "Aggregate Revenue", value: `$${stats.totalRevenue.toLocaleString()}`, icon: TrendingUp, color: "text-green-600", bg: "bg-green-50" },
                   { label: "Unit Personnel", value: stats.staffCount, icon: Users, color: "text-blue-600", bg: "bg-blue-50" },
-                  { label: "Center Backlog", value: stats.pendingAppointments, icon: Clock, color: "text-orange-600", bg: "bg-orange-50" },
-                  { label: "Hardware Health", value: "99.9%", icon: Activity, color: "text-purple-600", bg: "bg-purple-50" },
+                  { label: "Center Backlog", value: stats.pendingAppointments, icon: ClipboardList, color: "text-orange-600", bg: "bg-orange-50" },
+                  { label: "Hardware Health", value: "99.9%", icon: ShieldCheck, color: "text-purple-600", bg: "bg-purple-50" },
                 ].map((stat, i) => (
                   <div key={i} className="bg-white p-8 rounded-[40px] border border-white shadow-[0_20px_50px_rgba(0,0,0,0.04)] flex flex-col justify-between hover:scale-[1.05] transition-all cursor-default relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-8 opacity-0 group-hover:opacity-10 group-hover:translate-x-4 transition-all"><stat.icon className="h-20 w-20" /></div>
@@ -328,7 +328,7 @@ export default function AdminPage() {
                        {filteredEquipment.slice(0, 4).map(e => (
                          <div key={e.id} className="group flex items-center justify-between p-7 rounded-[30px] bg-slate-50 hover:bg-white border-2 border-transparent hover:border-slate-100 transition-all shadow-sm hover:shadow-xl">
                             <div className="flex items-center gap-6">
-                               <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-2xl", e.status === "operational" ? "bg-green-500 shadow-green-500/30" : "bg-orange-500")}>
+                               <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-2xl", e.status === "operational" ? "bg-green-50 shadow-green-500/30" : "bg-orange-500")}>
                                   <HardDrive className="h-7 w-7" />
                                </div>
                                <div>

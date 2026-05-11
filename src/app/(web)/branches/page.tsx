@@ -8,7 +8,7 @@ export default function BranchesPage() {
       <div className="mb-16">
         <h1 className="text-5xl font-black text-secondary mb-6 tracking-tighter uppercase italic">Our Regional Nodes</h1>
         <p className="text-slate-400 text-lg max-w-3xl italic font-medium">
-          Grace Diagnostic Center serves you across a synchronized network of medical facilities with the same commitment to "Fast, Clear, and Accurate Images".
+          Grace Diagnostic Center serves you across a synchronized network of medical facilities with the same commitment to &quot;Fast, Clear, and Accurate Images&quot;.
         </p>
       </div>
 

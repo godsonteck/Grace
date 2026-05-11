@@ -3,8 +3,9 @@
 import { useAuth } from "@/context/AuthContext";
 import { useState } from "react";
 import {
-  ArrowRight, ShieldAlert, Monitor, LayoutDashboard, Microscope, LogOut, Activity, Lock
+  ShieldAlert, Monitor, LayoutDashboard, Lock, Activity, Stethoscope
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -45,7 +46,7 @@ export default function LoginPage() {
       role: 'RADIOLOGIST' as const,
       title: 'Clinical Portal',
       desc: 'Radiology Results & EHR',
-      icon: Microscope,
+      icon: Stethoscope,
       color: 'bg-blue-600',
       accent: 'text-white'
     }
@@ -137,8 +138,4 @@ export default function LoginPage() {
       </div>
     </div>
   );
-}
-
-function cn(...classes: any[]) {
-  return classes.filter(Boolean).join(' ');
 }

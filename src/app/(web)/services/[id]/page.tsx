@@ -96,6 +96,35 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
             )}
           </section>
 
+          <section>
+             <h2 className="text-3xl font-black text-secondary tracking-tighter uppercase italic mb-8">Clinical Preparation Guide</h2>
+             <div className="bg-white rounded-[50px] border-4 border-slate-50 shadow-xl overflow-hidden">
+                <div className="p-10 bg-primary text-white flex items-center gap-6 italic">
+                   <div className="p-4 bg-white/20 rounded-2xl shadow-inner"><Info className="h-8 w-8" /></div>
+                   <div>
+                      <h3 className="text-2xl font-black uppercase tracking-tighter">Protocol Readiness</h3>
+                      <p className="text-[10px] font-black uppercase tracking-widest opacity-80">Ensuring optimal image fidelity</p>
+                   </div>
+                </div>
+                <div className="p-12 space-y-8">
+                   {[
+                     { title: "Arrival Node", desc: "Arrive at your selected branch at least 15 minutes prior to your diagnostic slot for electronic check-in." },
+                     { title: "Clinical Attire", desc: "Wear loose, comfortable clothing. Avoid metallic accessories (zippers, jewelry) as they may interfere with imaging sensors." },
+                     { title: "Medication Log", desc: "Continue regular medications unless specifically instructed otherwise by your referring clinician." },
+                     { title: "Hydration Sync", desc: "For ultrasound procedures, maintain a high hydration level as instructed by the clinical coordinator." }
+                   ].map((item, i) => (
+                     <div key={i} className="flex gap-8 group">
+                        <div className="text-4xl font-black text-slate-100 group-hover:text-primary transition-colors italic leading-none shrink-0">0{i+1}</div>
+                        <div>
+                           <p className="font-black text-secondary uppercase tracking-tighter text-lg italic mb-2">{item.title}</p>
+                           <p className="text-slate-500 italic text-sm leading-relaxed">{item.desc}</p>
+                        </div>
+                     </div>
+                   ))}
+                </div>
+             </div>
+          </section>
+
           <section className="bg-slate-900 text-white p-12 rounded-[50px] relative overflow-hidden">
              <div className="absolute top-0 right-0 p-12 opacity-10 scale-150 rotate-12"><CheckCircle2 className="h-40 w-40 text-primary" /></div>
              <div className="relative z-10">
