@@ -17,6 +17,9 @@ model Branch {
   equipment    Equipment[]
   staff        Staff[]
   invoices     Invoice[]
+  patients     Patient[]
+  reports      DiagnosticReport[]
+  referrals    ReferralDoctor[]
 }
 
 model Patient {
@@ -27,6 +30,8 @@ model Patient {
   dob          DateTime
   gender       String
   bloodGroup   String?
+  branchId     String?
+  branch       Branch?            @relation(fields: [branchId], references: [id])
   appointments Appointment[]
   reports      DiagnosticReport[]
 }
@@ -54,6 +59,7 @@ model DiagnosticReport {
   id            String      @id @default(cuid())
   appointmentId String      @unique
   patientId     String
+  branchId      String?
   resultId      String      @unique @default(cuid())
   content       String
   imageUrl      String?
@@ -63,6 +69,7 @@ model DiagnosticReport {
   createdAt     DateTime    @default(now())
   patient       Patient     @relation(fields: [patientId], references: [id])
   appointment   Appointment @relation(fields: [appointmentId], references: [id])
+  branch        Branch?     @relation(fields: [branchId], references: [id])
 }
 
 model ReferralDoctor {
@@ -71,6 +78,8 @@ model ReferralDoctor {
   facility  String?
   phone     String?
   email     String?
+  branchId  String?
+  branch    Branch?  @relation(fields: [branchId], references: [id])
   createdAt DateTime @default(now())
 }
 
@@ -100,6 +109,7 @@ model AuditLog {
   user      String
   action    String
   module    String
+  branchId  String?
   timestamp DateTime @default(now())
 }
 

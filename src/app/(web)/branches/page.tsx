@@ -1,20 +1,44 @@
+'use client';
+
 import { branches } from "@/lib/data";
-import { MapPin, Phone, Mail, Clock, ShieldCheck, ArrowRight } from "lucide-react";
+import { MapPin, Phone, Mail, Clock, ShieldCheck, ArrowRight, ChevronDown } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 
 export default function BranchesPage() {
+  const [selectedBranchId, setSelectedBranchId] = useState<string>(branches[0].id);
+  const selectedBranch = branches.find(b => b.id === selectedBranchId) || branches[0];
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 font-sans">
-      <div className="mb-16">
-        <h1 className="text-5xl font-black text-secondary mb-6 tracking-tighter uppercase italic">Our Regional Nodes</h1>
-        <p className="text-slate-400 text-lg max-w-3xl italic font-medium">
-          Grace Diagnostic Center serves you across a synchronized network of medical facilities with the same commitment to &quot;Fast, Clear, and Accurate Images&quot;.
-        </p>
+      <div className="mb-16 flex flex-col md:flex-row md:items-end justify-between gap-8">
+        <div>
+          <h1 className="text-5xl font-black text-secondary mb-6 tracking-tighter uppercase italic">Our Regional Nodes</h1>
+          <p className="text-slate-400 text-lg max-w-3xl italic font-medium">
+            Grace Diagnostic Center serves you across a synchronized network of medical facilities with the same commitment to &quot;Fast, Clear, and Accurate Images&quot;.
+          </p>
+        </div>
+
+        <div className="w-full md:w-80">
+          <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-4 block italic">Quick Selector</label>
+          <div className="relative group">
+            <select
+              value={selectedBranchId}
+              onChange={(e) => setSelectedBranchId(e.target.value)}
+              className="w-full appearance-none bg-white border-2 border-slate-100 rounded-2xl px-6 py-4 font-black text-secondary uppercase italic tracking-tighter focus:outline-none focus:border-primary transition-all cursor-pointer"
+            >
+              {branches.map(b => (
+                <option key={b.id} value={b.id}>{b.name.includes("-") ? b.name.split("-")[1] : b.name}</option>
+              ))}
+            </select>
+            <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 h-5 w-5 text-primary pointer-events-none group-hover:scale-110 transition-transform" />
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
         {branches.map((branch) => (
-          <div key={branch.id} className="group border-2 border-slate-50 rounded-[45px] overflow-hidden bg-white hover:border-primary hover:shadow-2xl transition-all">
+          <div key={branch.id} id={branch.id} className={`group border-2 rounded-[45px] overflow-hidden bg-white hover:shadow-2xl transition-all ${selectedBranchId === branch.id ? 'border-primary ring-4 ring-primary/10' : 'border-slate-50'}`}>
             <div className="bg-slate-50 p-10 border-b border-slate-100 group-hover:bg-white transition-colors">
               <div className="flex items-start justify-between">
                 <div>

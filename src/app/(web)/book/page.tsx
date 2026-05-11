@@ -159,8 +159,9 @@ function BookContent() {
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                 <div className="space-y-4">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-4 italic">Full Legal Name</label>
+                  <label htmlFor="patientName" className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-4 italic">Full Legal Name</label>
                   <input
+                    id="patientName"
                     required
                     type="text"
                     className="w-full px-8 py-5 rounded-2xl border-2 border-slate-50 bg-slate-50/50 focus:border-primary focus:bg-white outline-none transition-all font-bold text-lg italic shadow-inner"
@@ -170,8 +171,9 @@ function BookContent() {
                   />
                 </div>
                 <div className="space-y-4">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-4 italic">Date of Birth</label>
+                  <label htmlFor="patientDob" className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-4 italic">Date of Birth</label>
                   <input
+                    id="patientDob"
                     required
                     type="date"
                     className="w-full px-8 py-5 rounded-2xl border-2 border-slate-50 bg-slate-50/50 focus:border-primary focus:bg-white outline-none transition-all font-bold text-lg italic shadow-inner"
@@ -180,8 +182,9 @@ function BookContent() {
                   />
                 </div>
                 <div className="space-y-4">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-4 italic">Email Channel</label>
+                  <label htmlFor="patientEmail" className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-4 italic">Email Channel</label>
                   <input
+                    id="patientEmail"
                     required
                     type="email"
                     className="w-full px-8 py-5 rounded-2xl border-2 border-slate-50 bg-slate-50/50 focus:border-primary focus:bg-white outline-none transition-all font-bold text-lg italic shadow-inner"
@@ -191,8 +194,9 @@ function BookContent() {
                   />
                 </div>
                 <div className="space-y-4">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-4 italic">Mobile Uplink</label>
+                  <label htmlFor="patientPhone" className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-4 italic">Mobile Uplink</label>
                   <input
+                    id="patientPhone"
                     required
                     type="tel"
                     className="w-full px-8 py-5 rounded-2xl border-2 border-slate-50 bg-slate-50/50 focus:border-primary focus:bg-white outline-none transition-all font-bold text-lg italic shadow-inner"
@@ -318,8 +322,9 @@ function BookContent() {
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                 <div className="space-y-4">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-4 italic">Target Date</label>
+                  <label htmlFor="targetDate" className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-4 italic">Target Date</label>
                   <input
+                    id="targetDate"
                     required
                     type="date"
                     min={new Date().toISOString().split('T')[0]}
@@ -329,8 +334,9 @@ function BookContent() {
                   />
                 </div>
                 <div className="space-y-4">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-4 italic">Operational Slot</label>
+                  <label htmlFor="targetTime" className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-4 italic">Operational Slot</label>
                   <select
+                    id="targetTime"
                     required
                     className="w-full px-8 py-5 rounded-2xl border-2 border-slate-50 bg-slate-50/50 focus:border-primary focus:bg-white outline-none transition-all font-bold text-lg italic shadow-inner appearance-none"
                     value={formData.time}
