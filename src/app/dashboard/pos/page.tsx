@@ -102,7 +102,7 @@ export default function POSPage() {
       {/* Dynamic Header */}
       <header className="bg-secondary text-white px-10 py-6 flex justify-between items-center shadow-2xl z-50 border-b-4 border-primary/20">
         <div className="flex items-center gap-8">
-          <Link href="/admin" className="p-4 bg-slate-800 rounded-3xl hover:bg-slate-700 transition-all group border border-slate-700">
+          <Link href="/dashboard/admin" className="p-4 bg-slate-800 rounded-3xl hover:bg-slate-700 transition-all group border border-slate-700">
             <ChevronLeft className="h-6 w-6 text-slate-400 group-hover:text-primary transition-colors" />
           </Link>
           <div>

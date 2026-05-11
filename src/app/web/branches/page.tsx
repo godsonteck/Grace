@@ -98,7 +98,7 @@ export default function BranchesPage() {
                     </div>
                   </div>
                 </div>
-                <Link href={`/book?branchId=${branch.id}`} className="w-full bg-secondary hover:bg-primary text-white py-5 rounded-2xl font-black uppercase tracking-widest text-xs transition-all flex items-center justify-center gap-2 italic shadow-xl shadow-secondary/10">
+                <Link href={`/web/book?branchId=${branch.id}`} className="w-full bg-secondary hover:bg-primary text-white py-5 rounded-2xl font-black uppercase tracking-widest text-xs transition-all flex items-center justify-center gap-2 italic shadow-xl shadow-secondary/10">
                   Book at this Node <ArrowRight className="h-4 w-4" />
                 </Link>
               </div>

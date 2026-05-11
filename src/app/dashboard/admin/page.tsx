@@ -200,8 +200,8 @@ export default function AdminPage() {
   const navItems = [
     { id: "dashboard", name: "Executive Suite", icon: LayoutDashboard, roles: ['ADMIN'] },
     { id: "reports", name: "Financial Intel", icon: TrendingUp, roles: ['ADMIN'] },
-    { id: "analytics", name: "Clinical Analytics", icon: Activity, roles: ['ADMIN'], path: "/admin/analytics" },
-    { id: "lab-hub", name: "Laboratory Hub", icon: Beaker, roles: ['ADMIN', 'RADIOLOGIST'], path: "/admin/lab" },
+    { id: "analytics", name: "Clinical Analytics", icon: Activity, roles: ['ADMIN'], path: "/dashboard/admin/analytics" },
+    { id: "lab-hub", name: "Laboratory Hub", icon: Beaker, roles: ['ADMIN', 'RADIOLOGIST'], path: "/dashboard/admin/lab" },
     { id: "appointments", name: "Clinical Pipeline", icon: ClipboardList, badge: stats.pendingAppointments, roles: ['ADMIN', 'RADIOLOGIST'] },
     { id: "patients", name: "Patient EHR", icon: Users, roles: ['ADMIN', 'RADIOLOGIST'] },
     { id: "staff", name: "Human Capital", icon: Briefcase, roles: ['ADMIN'] },
@@ -267,7 +267,7 @@ export default function AdminPage() {
              </div>
              <button onClick={logout} className="w-full py-3 rounded-xl bg-slate-800/50 text-[10px] font-black uppercase tracking-widest text-red-400 hover:bg-red-500 hover:text-white transition-all">Terminate</button>
           </div>
-          <Link href="/pos" className="w-full flex items-center justify-center gap-3 bg-primary/10 hover:bg-primary text-primary hover:text-white py-4 rounded-[25px] text-[10px] font-black uppercase tracking-[0.2em] transition-all border border-primary/20">
+          <Link href="/dashboard/pos" className="w-full flex items-center justify-center gap-3 bg-primary/10 hover:bg-primary text-primary hover:text-white py-4 rounded-[25px] text-[10px] font-black uppercase tracking-[0.2em] transition-all border border-primary/20">
             <Monitor className="h-4 w-4" /> Launch POS
           </Link>
         </div>

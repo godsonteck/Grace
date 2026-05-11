@@ -23,7 +23,7 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
     return (
       <div className="max-w-7xl mx-auto px-4 py-20 text-center">
         <h1 className="text-4xl font-bold text-secondary mb-4">Service Not Found</h1>
-        <Link href="/scans" className="text-primary font-bold hover:underline">Back to All Services</Link>
+        <Link href="/web/scans" className="text-primary font-bold hover:underline">Back to All Services</Link>
       </div>
     );
   }
@@ -42,7 +42,7 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
           />
         </div>
         <div className="relative z-10 max-w-5xl mx-auto px-6 text-center">
-          <Link href="/scans" className="inline-flex items-center gap-2 text-primary font-black uppercase tracking-widest text-[10px] mb-8 hover:text-white transition-colors">
+          <Link href="/web/scans" className="inline-flex items-center gap-2 text-primary font-black uppercase tracking-widest text-[10px] mb-8 hover:text-white transition-colors">
             <ArrowLeft className="h-4 w-4" /> All Services
           </Link>
           <h1 className="text-5xl md:text-7xl font-black tracking-tighter uppercase italic mb-6">
@@ -161,7 +161,7 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
                       <p className="text-sm font-bold">Mon - Sat: 8am - 8pm</p>
                    </div>
                 </div>
-                <Link href="/book" className="block w-full bg-white text-secondary py-5 rounded-2xl font-black uppercase tracking-widest text-xs text-center hover:bg-slate-100 transition-all">
+                <Link href="/web/book" className="block w-full bg-white text-secondary py-5 rounded-2xl font-black uppercase tracking-widest text-xs text-center hover:bg-slate-100 transition-all">
                   Schedule Call
                 </Link>
              </div>

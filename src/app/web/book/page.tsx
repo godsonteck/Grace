@@ -112,7 +112,7 @@ function BookContent() {
           Thank you, {formData.patientName}. Your appointment request for {selectedScan?.name} at our {selectedBranch?.name.split("-")[1] || selectedBranch?.name} node has been prioritized in the clinical pipeline.
         </p>
         <button
-          onClick={() => router.push("/")}
+          onClick={() => router.push("/web")}
           className="bg-secondary text-white px-12 py-5 rounded-full font-black uppercase tracking-widest text-xs hover:bg-primary transition-all shadow-2xl active:scale-95"
         >
           Return to Hub

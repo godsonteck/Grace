@@ -5,7 +5,7 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Protect (dashboard) routes and sensitive API routes
-  const protectedPrefixes = ['/admin', '/pos', '/api/reports', '/api/referrals', '/api/branches'];
+  const protectedPrefixes = ['/admin', '/pos', '/dashboard', '/api/reports', '/api/referrals', '/api/branches'];
   const isProtected = protectedPrefixes.some(prefix => pathname.startsWith(prefix));
 
   if (isProtected) {
@@ -16,7 +16,7 @@ export function middleware(request: NextRequest) {
 
     if (!authSession && !pathname.includes('/login')) {
       const url = request.nextUrl.clone();
-      url.pathname = '/login';
+      url.pathname = pathname.startsWith('/dashboard') ? '/dashboard/login' : '/login';
       return NextResponse.redirect(url);
     }
   }
@@ -28,6 +28,7 @@ export const config = {
   matcher: [
     '/admin/:path*',
     '/pos/:path*',
+    '/dashboard/:path*',
     '/api/reports/:path*',
     '/api/referrals/:path*',
     '/api/branches/:path*',

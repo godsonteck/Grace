@@ -34,6 +34,8 @@ model Patient {
   branch       Branch?            @relation(fields: [branchId], references: [id])
   appointments Appointment[]
   reports      DiagnosticReport[]
+
+  @@index([branchId])
 }
 
 model Appointment {
@@ -45,7 +47,7 @@ model Appointment {
   date            DateTime
   time            String
   status          String            @default("pending")
-  priority        String            @default("normal")
+  priority        String            @default("normal") // normal, urgent
   referringDoctor String?
   notes           String?
   createdAt       DateTime          @default(now())
@@ -53,6 +55,9 @@ model Appointment {
   branch          Branch            @relation(fields: [branchId], references: [id])
   patient         Patient           @relation(fields: [patientId], references: [id])
   report          DiagnosticReport?
+
+  @@index([branchId])
+  @@index([patientId])
 }
 
 model DiagnosticReport {
@@ -70,6 +75,9 @@ model DiagnosticReport {
   patient       Patient     @relation(fields: [patientId], references: [id])
   appointment   Appointment @relation(fields: [appointmentId], references: [id])
   branch        Branch?     @relation(fields: [branchId], references: [id])
+
+  @@index([branchId])
+  @@index([patientId])
 }
 
 model ReferralDoctor {
@@ -81,6 +89,8 @@ model ReferralDoctor {
   branchId  String?
   branch    Branch?  @relation(fields: [branchId], references: [id])
   createdAt DateTime @default(now())
+
+  @@index([branchId])
 }
 
 model Staff {

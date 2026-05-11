@@ -23,6 +23,9 @@ export default function ConditionalLayout({ children }: { children: React.ReactN
   }, [isSyncing]);
 
   const isAuthOrAdmin = pathname.startsWith("/admin") ||
+                        pathname.startsWith("/dashboard/admin") ||
+                        pathname.startsWith("/dashboard/pos") ||
+                        pathname.startsWith("/dashboard/login") ||
                         pathname.startsWith("/pos") ||
                         pathname.startsWith("/login");
 

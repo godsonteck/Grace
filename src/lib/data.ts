@@ -182,7 +182,7 @@ export const scanTypes: ScanType[] = [
 ];
 
 export const bodyParts: BodyPart[] = [
-  // CT SCANS (Ho Prices)
+  // CT SCANS (Ho Prices based on official list)
   { id: "ct-head-brain", name: "Head / Brain", scanTypeId: "ct-scan", category: "Head", price: 800, priceWithContrast: 1450, duration: "15 mins", preparation: "Fast for 4 hours if contrast is required." },
   { id: "ct-brain-jaw-rta-3d", name: "Brain + Jaw (RTA) 3D", scanTypeId: "ct-scan", category: "Head", price: 900, duration: "20 mins", preparation: "No special preparation." },
   { id: "ct-neck", name: "Neck", scanTypeId: "ct-scan", category: "Neck", price: 850, priceWithContrast: 1350, duration: "15 mins", preparation: "Fast for 4 hours if contrast is required." },

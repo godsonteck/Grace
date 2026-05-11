@@ -26,10 +26,10 @@ export default function Footer() {
           <div>
             <h3 className="font-black text-sm uppercase tracking-[0.3em] text-white mb-10 italic">Quick Links</h3>
             <ul className="space-y-6 text-sm font-black uppercase tracking-widest italic">
-              <li><Link href="/" className="text-slate-400 hover:text-primary transition-colors">Home Hub</Link></li>
-              <li><Link href="/scans" className="text-slate-400 hover:text-primary transition-colors">Procedure Catalog</Link></li>
-              <li><Link href="/branches" className="text-slate-400 hover:text-primary transition-colors">Branch Network</Link></li>
-              <li><Link href="/results" className="text-slate-400 hover:text-primary transition-colors">Patient Portal</Link></li>
+              <li><Link href="/web" className="text-slate-400 hover:text-primary transition-colors">Home Hub</Link></li>
+              <li><Link href="/web/scans" className="text-slate-400 hover:text-primary transition-colors">Procedure Catalog</Link></li>
+              <li><Link href="/web/branches" className="text-slate-400 hover:text-primary transition-colors">Branch Network</Link></li>
+              <li><Link href="/web/results" className="text-slate-400 hover:text-primary transition-colors">Patient Portal</Link></li>
               <li><Link href="/refer" className="text-slate-400 hover:text-primary transition-colors flex items-center gap-2 underline decoration-primary decoration-2 underline-offset-4"><Stethoscope className="h-4 w-4" /> Doctor Referral</Link></li>
             </ul>
           </div>
@@ -56,8 +56,8 @@ export default function Footer() {
             &copy; {new Date().getFullYear()} GRACE DIAGNOSTIC CENTER. ALL SYSTEMS OPERATIONAL.
           </p>
           <div className="flex gap-8">
-             <Link href="/login" className="text-[9px] font-black uppercase tracking-widest text-slate-600 hover:text-primary transition-colors italic">System Orchestrator</Link>
-             <Link href="/pos" className="text-[9px] font-black uppercase tracking-widest text-slate-600 hover:text-primary transition-colors italic">Billing Terminal</Link>
+             <Link href="/dashboard/login" className="text-[9px] font-black uppercase tracking-widest text-slate-600 hover:text-primary transition-colors italic">System Orchestrator</Link>
+             <Link href="/dashboard/pos" className="text-[9px] font-black uppercase tracking-widest text-slate-600 hover:text-primary transition-colors italic">Billing Terminal</Link>
           </div>
         </div>
       </div>

@@ -34,25 +34,28 @@ export default function Home() {
             Harnessing state-of-the-art CT, X-Ray, and Ultrasound technology across our regional nodes.
           </p>
 
-          <div className="bg-white/10 backdrop-blur-md border border-white/20 p-6 rounded-2xl mb-12 inline-flex items-center gap-6 text-left max-w-2xl mx-auto">
-            <div className="bg-primary p-4 rounded-xl">
-              <Award className="h-8 w-8 text-white" />
+          <div className="bg-white/10 backdrop-blur-md border border-white/20 p-8 rounded-[40px] mb-12 inline-flex items-center gap-8 text-left max-w-2xl mx-auto shadow-2xl relative overflow-hidden group hover:bg-white/20 transition-all">
+            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:rotate-12 transition-transform">
+               <Award className="h-20 w-20 text-white" />
             </div>
-            <div>
-              <h3 className="font-black text-white uppercase tracking-widest text-sm">Outstanding Customer Experience Award</h3>
-              <p className="text-slate-300 text-xs mt-1">Recognized for our commitment to patient care and diagnostic precision across Ghana.</p>
+            <div className="bg-primary p-6 rounded-[25px] shadow-lg shadow-primary/20 relative z-10">
+              <Award className="h-10 w-10 text-white" />
+            </div>
+            <div className="relative z-10">
+              <h3 className="font-black text-white uppercase tracking-widest text-base mb-1 italic">Outstanding Customer Experience Award</h3>
+              <p className="text-slate-300 text-xs font-medium italic opacity-80 leading-relaxed">Recognized nationally for our commitment to patient care and diagnostic precision across our regional nodes.</p>
             </div>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-6 justify-center">
             <Link
-              href="/scans"
+              href="/web/scans"
               className="bg-primary hover:bg-white hover:text-secondary text-white px-12 py-5 rounded-full font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 transition-all shadow-[0_20px_40px_rgba(200,169,126,0.2)] active:scale-95"
             >
               Explore Procedures <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
-              href="/branches"
+              href="/web/branches"
               className="bg-white/10 backdrop-blur-xl hover:bg-white hover:text-secondary text-white px-12 py-5 rounded-full font-black uppercase tracking-widest text-xs transition-all border border-white/20 active:scale-95"
             >
               Network Map
@@ -90,7 +93,7 @@ export default function Home() {
               Advanced medical imaging synthesized with specialist expertise for life-critical diagnostic intelligence.
             </p>
           </div>
-          <Link href="/scans" className="text-primary font-black uppercase tracking-[0.2em] text-xs hover:underline italic flex items-center gap-3">
+          <Link href="/web/scans" className="text-primary font-black uppercase tracking-[0.2em] text-xs hover:underline italic flex items-center gap-3">
             Full Catalog <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
@@ -217,7 +220,7 @@ export default function Home() {
               A distributed network of diagnostic centers providing synchronized medical intelligence.
             </p>
           </div>
-          <Link href="/branches" className="text-primary font-black uppercase tracking-[0.2em] text-xs hover:underline italic flex items-center gap-3">
+          <Link href="/web/branches" className="text-primary font-black uppercase tracking-[0.2em] text-xs hover:underline italic flex items-center gap-3">
             Expansion Map <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
