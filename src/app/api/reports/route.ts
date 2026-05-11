@@ -4,7 +4,7 @@ import prisma from '@/lib/prisma';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { appointmentId, patientId, content, imageUrl, statFlag } = body;
+    const { appointmentId, patientId, content, imageUrl, statFlag, type, labValues } = body;
 
     const report = await prisma.diagnosticReport.create({
       data: {
@@ -13,6 +13,8 @@ export async function POST(request: Request) {
         content,
         imageUrl,
         statFlag: statFlag || false,
+        type: type || 'RADIOLOGY',
+        labValues: labValues,
         resultId: `GRC-${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
       },
     });

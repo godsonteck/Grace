@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 
 export default function POSPage() {
   const {
-    records, invoices, payInvoice, addInvoice
+    records, invoices, appointments, payInvoice, addInvoice
   } = useData();
 
   const { user, logout } = useAuth();
@@ -169,6 +169,7 @@ export default function POSPage() {
                 <tr className="text-slate-400 text-[11px] font-black uppercase tracking-[0.3em] border-b">
                   <th className="px-12 py-8">ID</th>
                   <th className="px-12 py-8">Case Identity</th>
+                  <th className="px-12 py-8 text-center">Priority</th>
                   <th className="px-12 py-8">Procedure Protocol</th>
                   <th className="px-12 py-8 text-center">Fee ($)</th>
                   <th className="px-12 py-8 text-right">Ops</th>
@@ -181,6 +182,13 @@ export default function POSPage() {
                     <td className="px-12 py-10">
                       <p className="font-black text-secondary text-lg italic underline decoration-primary decoration-4 underline-offset-[6px] group-hover:text-primary transition-colors">{inv.patientName}</p>
                       <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mt-3">{inv.branchName}</p>
+                    </td>
+                    <td className="px-12 py-10 text-center">
+                       {appointments.find(a => a.id === inv.id)?.priority === 'urgent' ? (
+                         <span className="px-3 py-1 bg-red-500 text-white rounded-lg text-[9px] font-black animate-pulse uppercase tracking-widest">STAT</span>
+                       ) : (
+                         <span className="text-slate-200 text-[9px] font-black uppercase">Normal</span>
+                       )}
                     </td>
                     <td className="px-12 py-10">
                        <span className="px-4 py-2 bg-slate-100 rounded-xl text-[10px] font-black text-slate-500 uppercase tracking-widest">{inv.scanName}</span>
