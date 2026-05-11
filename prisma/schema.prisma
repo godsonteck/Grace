@@ -16,6 +16,7 @@ model Branch {
   appointments Appointment[]
   equipment    Equipment[]
   staff        Staff[]
+  invoices     Invoice[]
 }
 
 model Patient {
@@ -100,4 +101,16 @@ model AuditLog {
   action    String
   module    String
   timestamp DateTime @default(now())
+}
+
+model Invoice {
+  id          String   @id @default(cuid())
+  patientName String
+  scanName    String
+  amount      Int
+  date        DateTime @default(now())
+  status      String   @default("unpaid")
+  branchName  String
+  branchId    String?
+  branch      Branch?  @relation(fields: [branchId], references: [id])
 }

@@ -60,6 +60,7 @@ export default function POSPage() {
       date: new Date().toLocaleDateString(),
       status: "unpaid",
       branchName: branch.name,
+      branchId: branch.id,
     };
 
     addInvoice(newInvoice);

@@ -117,21 +117,41 @@ export default function ResultsPage() {
                        </div>
                     </div>
 
-                    <div className="p-12 rounded-[50px] bg-slate-900 text-white shadow-2xl relative overflow-hidden group">
-                       <div className="absolute top-0 right-0 p-8 opacity-5 -rotate-12 group-hover:rotate-0 transition-transform"><CheckCircle className="h-32 w-32 text-primary" /></div>
-                       <p className="text-[10px] font-black text-primary uppercase tracking-[0.4em] mb-8 italic flex items-center gap-3">
+                    <div id="printable-report" className="p-12 rounded-[50px] bg-white text-secondary shadow-2xl relative overflow-hidden group border-4 border-slate-50 print:border-0 print:shadow-none print:p-0">
+                       <div className="hidden print:flex justify-between items-center mb-12 border-b-4 border-primary pb-8">
+                          <div className="flex items-center gap-4">
+                             <ShieldCheck className="h-10 w-10 text-primary" />
+                             <div>
+                                <h1 className="text-3xl font-black italic uppercase tracking-tighter">GRACE<span className="text-primary not-italic">DIAGNOSTIC</span></h1>
+                                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 italic">Fast, Clear, and Accurate Images</p>
+                             </div>
+                          </div>
+                          <div className="text-right">
+                             <p className="text-sm font-black italic uppercase">{report.appointment?.branch?.name || "Achimota Node"}</p>
+                             <p className="text-[9px] font-bold text-slate-400 uppercase">{report.appointment?.branch?.address}</p>
+                          </div>
+                       </div>
+
+                       <div className="absolute top-0 right-0 p-8 opacity-5 -rotate-12 group-hover:rotate-0 transition-transform print:hidden"><CheckCircle className="h-32 w-32 text-primary" /></div>
+                       <p className="text-[10px] font-black text-primary uppercase tracking-[0.4em] mb-8 italic flex items-center gap-3 print:mb-4">
                           <ShieldCheck className="h-4 w-4" /> Verified Clinical Impression
                        </p>
-                       <p className="text-2xl font-medium italic leading-relaxed text-slate-300 relative z-10">
-                          "{report.content}"
-                       </p>
-                       <div className="mt-12 pt-8 border-t border-white/10 flex justify-between items-end relative z-10">
+                       <div className="bg-slate-50 p-8 rounded-[35px] mb-8 print:bg-white print:p-0 print:mb-12">
+                          <p className="text-2xl font-medium italic leading-relaxed text-secondary relative z-10">
+                             "{report.content}"
+                          </p>
+                       </div>
+
+                       <div className="mt-12 pt-8 border-t border-slate-100 flex justify-between items-end relative z-10 print:mt-12 print:pt-12 print:border-t-2">
                           <div>
-                             <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1 italic">Issued At</p>
-                             <p className="text-lg font-black italic tracking-tighter">{new Date(report.createdAt).toLocaleDateString()} • NODE: ACHIMOTA</p>
+                             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 italic">Issued At</p>
+                             <p className="text-lg font-black italic tracking-tighter">{new Date(report.createdAt).toLocaleDateString()} • NODE: {report.appointment?.branch?.name?.split("-")[1]?.trim().toUpperCase() || "ACCRA"}</p>
                           </div>
-                          <button className="bg-primary text-secondary px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center gap-3 hover:bg-white transition-all italic shadow-xl shadow-primary/20">
-                             <Download className="h-4 w-4" /> Hardcopy PDF
+                          <button
+                            onClick={() => window.print()}
+                            className="bg-primary text-secondary px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center gap-3 hover:bg-secondary hover:text-white transition-all italic shadow-xl shadow-primary/20 print:hidden"
+                          >
+                             <Download className="h-4 w-4" /> Hardcopy PDF / Print
                           </button>
                        </div>
                     </div>

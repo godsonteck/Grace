@@ -66,6 +66,7 @@ export interface Invoice {
   date: string;
   status: "paid" | "unpaid";
   branchName: string;
+  branchId?: string;
 }
 
 export interface Staff {
