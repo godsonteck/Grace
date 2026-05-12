@@ -27,6 +27,8 @@ export default function POSPage() {
     patientName: "",
     scanId: "",
     branchId: branches[0].id,
+    withContrast: false,
+    afterHoursSurcharge: false,
   });
 
   const filteredInvoices = useMemo(() => {
@@ -52,11 +54,18 @@ export default function POSPage() {
     const branch = branches.find(b => b.id === posData.branchId);
     if (!scan || !branch) return;
 
+    const surchargeAmount = parseInt(businessInfo.surchargeNote.match(/\d+/)?.[0] || "70");
+
+    let totalAmount = posData.withContrast && scan.priceWithContrast ? scan.priceWithContrast : scan.price;
+    if (posData.afterHoursSurcharge) {
+      totalAmount += surchargeAmount;
+    }
+
     const newInvoice: Invoice = {
       id: `GRC-${Math.floor(Math.random() * 900000) + 100000}`,
       patientName: posData.patientName.toUpperCase(),
-      scanName: scan.name,
-      amount: scan.price,
+      scanName: `${scan.name}${posData.withContrast ? ' (W. CONTRAST)' : ''}${posData.afterHoursSurcharge ? ' + SURCHARGE' : ''}`,
+      amount: totalAmount,
       date: new Date().toLocaleDateString(),
       status: "unpaid",
       branchName: branch.name,
@@ -65,7 +74,7 @@ export default function POSPage() {
 
     addInvoice(newInvoice);
     setIsPosModalOpen(false);
-    setPosData({ patientName: "", scanId: "", branchId: branches[0].id });
+    setPosData({ patientName: "", scanId: "", branchId: branches[0].id, withContrast: false, afterHoursSurcharge: false });
   };
 
   if (!isShiftActive) {
@@ -121,7 +130,7 @@ export default function POSPage() {
           <div className="hidden lg:flex items-center gap-12">
             <div className="text-right">
               <p className="text-[10px] text-slate-500 uppercase font-black tracking-[0.3em] mb-2 italic">Shift Collection</p>
-              <p className="text-3xl font-black text-white leading-none tracking-tighter">${stats.todayRevenue.toLocaleString()}</p>
+              <p className="text-3xl font-black text-white leading-none tracking-tighter">GH₵{stats.todayRevenue.toLocaleString()}</p>
             </div>
             <div className="h-10 w-px bg-slate-800" />
             <div className="text-right">
@@ -194,7 +203,7 @@ export default function POSPage() {
                     <td className="px-12 py-10">
                        <span className="px-4 py-2 bg-slate-100 rounded-xl text-[10px] font-black text-slate-500 uppercase tracking-widest">{inv.scanName}</span>
                     </td>
-                    <td className="px-12 py-10 text-center font-black text-secondary text-2xl tracking-tighter italic">${inv.amount.toLocaleString()}</td>
+                    <td className="px-12 py-10 text-center font-black text-secondary text-2xl tracking-tighter italic">GH₵{inv.amount.toLocaleString()}</td>
                     <td className="px-12 py-10 text-right">
                       <div className="flex justify-end gap-4 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-x-8 group-hover:translate-x-0">
                         {inv.status === "unpaid" ? (
@@ -232,7 +241,7 @@ export default function POSPage() {
                 <div className="space-y-10">
                    <div className="p-10 rounded-[45px] bg-slate-800/40 border-2 border-slate-700/50 italic shadow-inner">
                       <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.4em] mb-3 italic">Node Yield Today</p>
-                      <p className="text-6xl font-black text-primary tracking-tighter">${stats.todayRevenue.toLocaleString()}</p>
+                      <p className="text-6xl font-black text-primary tracking-tighter">GH₵{stats.todayRevenue.toLocaleString()}</p>
                    </div>
                    <div className="p-10 rounded-[45px] bg-slate-800/40 border-2 border-slate-700/50 italic shadow-inner flex justify-between items-center">
                       <div>
@@ -270,7 +279,7 @@ export default function POSPage() {
                       <div className="flex justify-between text-xs font-black uppercase text-slate-400 italic tracking-widest"><span>Patient Case</span> <span className="text-secondary underline decoration-primary decoration-2">{receiptToPrint.patientName}</span></div>
                       <div className="flex justify-between text-xs font-black uppercase text-slate-400 italic tracking-widest"><span>Service Node</span> <span className="text-secondary">{receiptToPrint.scanName}</span></div>
                       <div className="flex justify-between text-xs font-black uppercase text-slate-400 italic tracking-widest"><span>Voucher ID</span> <span className="text-slate-300 font-mono">{receiptToPrint.id}</span></div>
-                      <div className="flex justify-between text-4xl font-black text-secondary tracking-tighter pt-8 uppercase italic underline decoration-primary decoration-8 underline-offset-8"><span>Total</span> <span>${receiptToPrint.amount.toLocaleString()}</span></div>
+                      <div className="flex justify-between text-4xl font-black text-secondary tracking-tighter pt-8 uppercase italic underline decoration-primary decoration-8 underline-offset-8"><span>Total</span> <span>GH₵{receiptToPrint.amount.toLocaleString()}</span></div>
                    </div>
                    <button className="w-full mt-auto bg-secondary text-white py-8 rounded-[40px] font-black uppercase tracking-[0.3em] text-xs flex items-center justify-center gap-5 hover:bg-primary transition-all italic shadow-2xl active:scale-95">
                       <Printer className="h-5 w-5 text-primary" /> Execute hardcopy
@@ -300,10 +309,34 @@ export default function POSPage() {
               </div>
               <div className="space-y-6">
                 <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.6em] ml-8 italic">Clinical Protocol Selection</label>
-                <select required className="w-full px-12 py-10 rounded-[50px] border-4 border-slate-50 focus:border-primary outline-none font-black text-2xl bg-white appearance-none italic shadow-xl tracking-tighter transition-all" value={posData.scanId} onChange={(e) => setPosData({ ...posData, scanId: e.target.value })}>
+                <select required className="w-full px-12 py-10 rounded-[50px] border-4 border-slate-50 focus:border-primary outline-none font-black text-2xl bg-white appearance-none italic shadow-xl tracking-tighter transition-all" value={posData.scanId} onChange={(e) => setPosData({ ...posData, scanId: e.target.value, withContrast: false })}>
                   <option value="">SELECT SERVICE...</option>
-                  {records.map(r => <option key={r.id} value={r.id}>{r.name.toUpperCase()} (${r.price.toLocaleString()})</option>)}
+                  {records.map(r => <option key={r.id} value={r.id}>{r.name.toUpperCase()} (GH₵{r.price.toLocaleString()})</option>)}
                 </select>
+              </div>
+
+              {posData.scanId && records.find(r => r.id === posData.scanId)?.priceWithContrast && (
+                <div className="flex items-center gap-6 ml-8">
+                  <input
+                    type="checkbox"
+                    id="contrast"
+                    className="w-8 h-8 rounded-xl border-4 border-slate-200 text-primary focus:ring-primary"
+                    checked={posData.withContrast}
+                    onChange={(e) => setPosData({ ...posData, withContrast: e.target.checked })}
+                  />
+                  <label htmlFor="contrast" className="text-xl font-black text-secondary italic tracking-tighter uppercase">Include IV Contrast (+GH₵{(records.find(r => r.id === posData.scanId)!.priceWithContrast! - records.find(r => r.id === posData.scanId)!.price).toLocaleString()})</label>
+                </div>
+              )}
+
+              <div className="flex items-center gap-6 ml-8">
+                <input
+                  type="checkbox"
+                  id="surcharge"
+                  className="w-8 h-8 rounded-xl border-4 border-slate-200 text-primary focus:ring-primary"
+                  checked={posData.afterHoursSurcharge}
+                  onChange={(e) => setPosData({ ...posData, afterHoursSurcharge: e.target.checked })}
+                />
+                <label htmlFor="surcharge" className="text-xl font-black text-secondary italic tracking-tighter uppercase">After working time surcharge (+GH₵{businessInfo.surchargeNote.match(/\d+/)?.[0] || "70"})</label>
               </div>
               <button type="submit" className="w-full bg-secondary text-white py-12 rounded-[60px] font-black uppercase tracking-[0.4em] text-2xl flex items-center justify-center gap-8 hover:bg-primary transition-all shadow-[0_50px_100px_rgba(0,0,0,0.3)] active:scale-95 italic">
                   AUTHORIZE VOUCHER <ArrowRight className="h-8 w-8 text-primary" />

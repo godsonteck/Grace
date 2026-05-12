@@ -73,7 +73,7 @@ export default function BranchesPage() {
                     <div className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100 group-hover:border-primary/20 transition-all">
                       <Phone className="h-5 w-5 text-primary shrink-0" />
                       <span className="text-secondary font-black text-lg tracking-tighter italic">
-                        {branch.id === "ho-branch" ? "0552 979 091" : branch.phone}
+                        {branch.name.includes("Ho") ? "0552 979 091" : branch.phone}
                       </span>
                     </div>
                     <div className="flex items-center gap-4">

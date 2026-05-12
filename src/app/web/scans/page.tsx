@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { scanTypes, BodyPart } from "@/lib/data";
 import { useData } from "@/context/DataContext";
-import { Search, ChevronRight, Clock, Info, Calendar } from "lucide-react";
+import { Search, ChevronRight, Clock, Info, Calendar, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 function ScansContent() {
@@ -43,11 +43,11 @@ function ScansContent() {
   }, [filteredBodyParts]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="mb-12">
-        <h1 className="text-4xl font-bold text-secondary mb-4">Diagnostic Scans</h1>
-        <p className="text-muted text-lg">
-          Browse our complete list of imaging services. Click on a procedure to see duration and preparation details.
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 font-sans">
+      <div className="mb-16">
+        <h1 className="text-5xl font-black text-secondary mb-6 tracking-tighter uppercase italic underline decoration-primary decoration-8 underline-offset-8">Procedure Catalog</h1>
+        <p className="text-slate-400 text-lg italic font-medium max-w-2xl">
+          Browse our complete list of synchronized medical imaging services across the Grace Diagnostic network.
         </p>
       </div>
 
@@ -63,27 +63,27 @@ function ScansContent() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0">
+          <div className="flex gap-3 overflow-x-auto pb-4 md:pb-0 scrollbar-hide">
           <button
             onClick={() => setSelectedType(null)}
             className={cn(
-              "px-6 py-3 rounded-xl font-medium whitespace-nowrap transition-all",
+                "px-8 py-3 rounded-2xl font-black uppercase tracking-widest text-[10px] whitespace-nowrap transition-all italic",
               selectedType === null
-                ? "bg-primary text-white shadow-lg shadow-primary/20"
-                : "bg-white border border-slate-200 text-secondary hover:border-primary"
+                  ? "bg-primary text-white shadow-xl shadow-primary/20"
+                  : "bg-white border-2 border-slate-50 text-slate-400 hover:border-primary hover:text-primary"
             )}
           >
-            All Scans
+              All Protocols
           </button>
           {scanTypes.map((type) => (
             <button
               key={type.id}
               onClick={() => setSelectedType(type.id)}
               className={cn(
-                "px-6 py-3 rounded-xl font-medium whitespace-nowrap transition-all",
+                  "px-8 py-3 rounded-2xl font-black uppercase tracking-widest text-[10px] whitespace-nowrap transition-all italic",
                 selectedType === type.id
-                  ? "bg-primary text-white shadow-lg shadow-primary/20"
-                  : "bg-white border border-slate-200 text-secondary hover:border-primary"
+                    ? "bg-primary text-white shadow-xl shadow-primary/20"
+                    : "bg-white border-2 border-slate-50 text-slate-400 hover:border-primary hover:text-primary"
               )}
             >
               {type.name}
@@ -103,11 +103,11 @@ function ScansContent() {
 
               return (
                 <div key={type.id} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                  <div className="flex items-center gap-4 mb-6">
-                    <h2 className="text-2xl font-bold text-secondary">{type.name}</h2>
-                    <div className="h-px flex-grow bg-slate-100" />
-                    <span className="text-sm font-medium text-muted-foreground bg-slate-100 px-3 py-1 rounded-full">
-                      {partsInType.length} parts
+                  <div className="flex items-center gap-6 mb-8">
+                    <h2 className="text-3xl font-black text-secondary uppercase italic tracking-tighter">{type.name}</h2>
+                    <div className="h-2 flex-grow bg-slate-50 rounded-full" />
+                    <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em] italic bg-primary/5 px-4 py-2 rounded-xl">
+                      {partsInType.length} Acquisition Nodes
                     </span>
                   </div>
 
@@ -118,19 +118,20 @@ function ScansContent() {
                           key={part.id}
                           onClick={() => setActivePart(part)}
                           className={cn(
-                            "group p-4 border rounded-xl bg-white hover:border-primary hover:shadow-md transition-all flex justify-between items-center cursor-pointer",
-                            activePart?.id === part.id ? "border-primary ring-2 ring-primary/10 shadow-md" : "border-slate-100"
+                            "group p-6 border-2 rounded-[35px] bg-white hover:border-primary hover:shadow-2xl transition-all flex justify-between items-center cursor-pointer relative overflow-hidden",
+                            activePart?.id === part.id ? "border-primary ring-4 ring-primary/5 shadow-2xl" : "border-slate-50"
                           )}
                         >
+                          {activePart?.id === part.id && <div className="absolute top-0 right-0 p-3"><CheckCircle className="h-4 w-4 text-primary" /></div>}
                           <div>
                             <h3 className={cn(
-                              "font-semibold transition-colors",
+                              "text-lg font-black uppercase italic tracking-tighter transition-colors",
                               activePart?.id === part.id ? "text-primary" : "text-secondary group-hover:text-primary"
                             )}>
                               {part.name}
                             </h3>
-                            <p className="text-xs text-muted-foreground uppercase tracking-wider mt-1">
-                              {part.category}
+                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-2 italic">
+                              {part.category} NODE
                             </p>
                           </div>
                           <ChevronRight className={cn(
@@ -188,7 +189,7 @@ function ScansContent() {
                       <span className="text-2xl font-bold text-secondary">${activePart.price}</span>
                     </div>
                     <button
-                      onClick={() => router.push(`/book?scanId=${activePart.id}`)}
+                      onClick={() => router.push(`/web/book?scanId=${activePart.id}`)}
                       className="w-full bg-secondary text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-slate-800 transition-all shadow-lg shadow-secondary/20"
                     >
                       <Calendar className="h-5 w-5" />

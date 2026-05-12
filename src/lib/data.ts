@@ -102,7 +102,7 @@ export const businessInfo = {
   motto: "Fast, Clear, and Accurate Images",
   contacts: ["0555 777 333", "0501 239 383"],
   email: "gracediagnosticgh@gmail.com",
-  surchargeNote: "After working time 70gh extra",
+  surchargeNote: "After working hours (after 8pm), a surcharge of 70 GH₵ applies.",
   ceo: {
     name: "Mrs. Grace Mensah",
     title: "Founder & CEO",
@@ -215,7 +215,7 @@ export const bodyParts: BodyPart[] = [
   { id: "us-breast", name: "Breast (Per One)", scanTypeId: "ultrasound-scan", category: "Chest", price: 200, duration: "20 mins", preparation: "No talcum powder or deodorant." },
   { id: "us-scrotum", name: "Scrotum", scanTypeId: "ultrasound-scan", category: "Urology", price: 250, duration: "20 mins", preparation: "No special preparation." },
   { id: "us-msk", name: "MSK", scanTypeId: "ultrasound-scan", category: "Musculoskeletal", price: 250, duration: "25 mins", preparation: "No special preparation." },
-  { id: "us-anomaly", name: "Anomaly", scanTypeId: "ultrasound-scan", category: "Obstetric", price: 250, duration: "45 mins", preparation: "No special preparation." },
+  { id: "us-anomaly", name: "Anomaly", scanTypeId: "ultrasound-scan", category: "Obstetric", price: 200, duration: "45 mins", preparation: "No special preparation." },
   { id: "us-urology-prostate", name: "Urology / Prostate", scanTypeId: "ultrasound-scan", category: "Urology", price: 200, duration: "20 mins", preparation: "Full bladder required." },
   { id: "us-superficial-swelling", name: "Superficial Swelling", scanTypeId: "ultrasound-scan", category: "General", price: 200, duration: "15 mins", preparation: "No special preparation." },
   { id: "us-arterial-doppler", name: "Arterial Doppler (One Leg)", scanTypeId: "ultrasound-scan", category: "Vascular", price: 400, duration: "30 mins", preparation: "No special preparation." },

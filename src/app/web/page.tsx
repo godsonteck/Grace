@@ -115,7 +115,7 @@ export default function Home() {
                   {type.description}
                 </p>
                 <Link
-                  href={`/scans?type=${type.id}`}
+                  href={`/web/scans?type=${type.id}`}
                   className="bg-slate-50 text-secondary px-8 py-4 rounded-full font-black uppercase tracking-widest text-[10px] inline-flex items-center gap-3 group-hover:bg-primary group-hover:text-white transition-all shadow-sm"
                 >
                   View Details <ArrowRight className="h-3 w-3" />
