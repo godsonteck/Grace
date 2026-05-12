@@ -81,7 +81,7 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
                     <p className="text-xs text-slate-600 italic leading-relaxed">{p.preparation}</p>
                   </div>
                   <Link
-                    href={`/book?scanId=${p.id}`}
+                    href={`/web/book?scanId=${p.id}`}
                     className="mt-8 w-full bg-secondary text-white py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 group-hover:bg-primary transition-all"
                   >
                     Book Now <ArrowRight size={14} />
@@ -174,7 +174,7 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
                   <div key={b.id} className="flex items-start gap-4 pb-6 border-b border-slate-50 last:border-0 last:pb-0">
                      <MapPin className="h-5 w-5 text-primary shrink-0 mt-1" />
                      <div>
-                        <p className="font-black text-secondary text-sm uppercase italic">{b.name.split("-")[1]?.trim() || b.name}</p>
+                        <p className="font-black text-secondary text-sm uppercase italic">{b.name.includes("-") ? b.name.split("-")[1]?.trim() : b.name}</p>
                         <p className="text-[10px] text-slate-400 font-bold uppercase mt-1 tracking-wider">{b.address}</p>
                      </div>
                   </div>

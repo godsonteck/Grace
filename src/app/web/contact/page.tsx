@@ -67,7 +67,7 @@ export default function ContactPage() {
                            >
                               <option value="all">Global Hub (All Branches)</option>
                               {branches.map(b => (
-                                <option key={b.id} value={b.id}>{b.name.split("-")[1]?.trim().toUpperCase() || b.name.toUpperCase()}</option>
+                                <option key={b.id} value={b.id}>{b.name.includes("-") ? b.name.split("-")[1]?.trim().toUpperCase() : b.name.toUpperCase()}</option>
                               ))}
                            </select>
                            <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-300 pointer-events-none" />
@@ -120,7 +120,7 @@ export default function ContactPage() {
                      {branches.map(b => (
                        <div key={b.id} className="p-6 rounded-3xl bg-slate-50 border-2 border-slate-100 flex items-center gap-4 hover:border-primary transition-all">
                           <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-primary"><MapPin className="h-5 w-5" /></div>
-                          <span className="font-black text-[10px] uppercase tracking-widest text-secondary italic">{b.name.split("-")[1].trim()}</span>
+                          <span className="font-black text-[10px] uppercase tracking-widest text-secondary italic">{b.name.includes("-") ? b.name.split("-")[1].trim() : b.name}</span>
                        </div>
                      ))}
                   </div>

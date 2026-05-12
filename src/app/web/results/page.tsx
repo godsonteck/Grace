@@ -145,7 +145,7 @@ export default function ResultsPage() {
                        <div className="mt-12 pt-8 border-t border-slate-100 flex justify-between items-end relative z-10 print:mt-12 print:pt-12 print:border-t-2">
                           <div>
                              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 italic">Issued At</p>
-                             <p className="text-lg font-black italic tracking-tighter">{new Date(report.createdAt).toLocaleDateString()} • NODE: {report.appointment?.branch?.name?.split("-")[1]?.trim().toUpperCase() || "ACCRA"}</p>
+                             <p className="text-lg font-black italic tracking-tighter">{new Date(report.createdAt).toLocaleDateString()} • NODE: {report.appointment?.branch?.name?.includes("-") ? report.appointment.branch.name.split("-")[1].trim().toUpperCase() : report.appointment?.branch?.name?.toUpperCase() || "ACCRA"}</p>
                           </div>
                           <button
                             onClick={() => window.print()}

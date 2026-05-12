@@ -109,7 +109,7 @@ function BookContent() {
         </div>
         <h1 className="text-4xl font-black text-secondary mb-6 tracking-tighter uppercase italic underline decoration-primary decoration-8 underline-offset-8">Request Orchestrated</h1>
         <p className="text-slate-400 text-lg mb-12 italic font-medium leading-relaxed">
-          Thank you, {formData.patientName}. Your appointment request for {selectedScan?.name} at our {selectedBranch?.name.split("-")[1] || selectedBranch?.name} node has been prioritized in the clinical pipeline.
+          Thank you, {formData.patientName}. Your appointment request for {selectedScan?.name} at our {selectedBranch?.name.includes("-") ? selectedBranch.name.split("-")[1].trim() : selectedBranch?.name} node has been prioritized in the clinical pipeline.
         </p>
         <button
           onClick={() => router.push("/web")}
@@ -375,7 +375,7 @@ function BookContent() {
                     isSubmitting ? "opacity-70 cursor-not-allowed" : "hover:bg-primary shadow-secondary/20 hover:shadow-primary/20"
                   )}
                 >
-                  {isSubmitting ? "SYCHRONIZING..." : "ATTESET REQUEST"}
+                  {isSubmitting ? "SYCHRONIZING..." : "ATTEST REQUEST"}
                   {!isSubmitting && <ShieldCheck className="h-6 w-6 text-primary shadow-[0_0_15px_#C8A97E]" />}
                 </button>
               </div>

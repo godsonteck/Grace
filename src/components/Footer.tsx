@@ -30,7 +30,7 @@ export default function Footer() {
               <li><Link href="/web/scans" className="text-slate-400 hover:text-primary transition-colors">Procedure Catalog</Link></li>
               <li><Link href="/web/branches" className="text-slate-400 hover:text-primary transition-colors">Branch Network</Link></li>
               <li><Link href="/web/results" className="text-slate-400 hover:text-primary transition-colors">Patient Portal</Link></li>
-              <li><Link href="/refer" className="text-slate-400 hover:text-primary transition-colors flex items-center gap-2 underline decoration-primary decoration-2 underline-offset-4"><Stethoscope className="h-4 w-4" /> Doctor Referral</Link></li>
+              <li><Link href="/web/refer" className="text-slate-400 hover:text-primary transition-colors flex items-center gap-2 underline decoration-primary decoration-2 underline-offset-4"><Stethoscope className="h-4 w-4" /> Doctor Referral</Link></li>
             </ul>
           </div>
           <div>

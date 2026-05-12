@@ -1,8 +1,9 @@
 "use client";
 
-import { ShieldCheck, Award, Target, Eye, Heart, Users, Activity, Microscope } from "lucide-react";
+import { ShieldCheck, Award, Target, Eye, Heart, Users, Activity, Microscope, Quote } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
+import { businessInfo } from "@/lib/data";
 
 export default function AboutPage() {
   const stats = [
@@ -60,6 +61,54 @@ export default function AboutPage() {
               At Grace Diagnostic Centre, we blend cutting-edge technology with human compassion to deliver &quot;Fast, Clear, and Accurate Images&quot; that save lives.
            </p>
         </div>
+      </section>
+
+      {/* Leadership Section */}
+      <section className="py-32 px-4 bg-slate-50">
+         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+            <div className="order-2 lg:order-1 space-y-8">
+               <div className="inline-flex items-center gap-3 px-4 py-2 bg-primary/10 rounded-full text-primary border border-primary/20">
+                  <Quote className="h-4 w-4" />
+                  <span className="text-[10px] font-black uppercase tracking-widest italic">A Message from our CEO</span>
+               </div>
+               <h2 className="text-5xl font-black text-secondary tracking-tighter uppercase italic leading-tight">
+                  Driving <span className="text-primary not-italic">Clinical</span> Innovation
+               </h2>
+               <div className="relative">
+                  <p className="text-2xl text-slate-600 italic leading-relaxed font-medium">
+                     &quot;{businessInfo.ceo.message}&quot;
+                  </p>
+                  <div className="mt-10">
+                     <p className="text-xl font-black text-secondary uppercase tracking-tighter italic">{businessInfo.ceo.name}</p>
+                     <p className="text-sm font-black text-primary uppercase tracking-[0.2em] mt-1">{businessInfo.ceo.title}</p>
+                  </div>
+               </div>
+
+               <div className="p-8 bg-white rounded-[40px] border border-slate-100 shadow-xl relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:rotate-12 transition-transform">
+                     <Target className="h-24 w-24 text-secondary" />
+                  </div>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 italic">The Vision</p>
+                  <p className="text-lg text-secondary font-bold italic leading-relaxed">
+                     {businessInfo.ceo.vision}
+                  </p>
+               </div>
+            </div>
+
+            <div className="order-1 lg:order-2 relative">
+               <div className="aspect-[4/5] rounded-[60px] overflow-hidden shadow-2xl relative z-10 border-[12px] border-white group">
+                  <Image
+                    src="/images/ceo/ceo-profile.jpg"
+                    width={800}
+                    height={1000}
+                    className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700 scale-105 hover:scale-100"
+                    alt={businessInfo.ceo.name}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-secondary/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+               </div>
+               <div className="absolute -top-10 -right-10 w-48 h-48 bg-primary rounded-full blur-[80px] opacity-20 animate-pulse" />
+            </div>
+         </div>
       </section>
 
       {/* Legacy Section */}
@@ -159,6 +208,60 @@ export default function AboutPage() {
                  </div>
               </div>
             ))}
+         </div>
+      </section>
+
+      {/* Culture & Community */}
+      <section className="py-32 px-4">
+         <div className="max-w-7xl mx-auto">
+            <div className="bg-secondary rounded-[80px] p-12 md:p-24 overflow-hidden relative">
+               <div className="absolute top-0 right-0 p-32 opacity-10 pointer-events-none italic font-black text-white text-[15rem] leading-none select-none">PEOPLE</div>
+               <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center relative z-10">
+                  <div className="space-y-10">
+                     <div className="inline-flex items-center gap-3 px-6 py-2 bg-white/10 rounded-full border border-white/20">
+                        <Users className="h-5 w-5 text-primary" />
+                        <span className="text-[10px] font-black uppercase tracking-widest text-white italic">Culture & Community</span>
+                     </div>
+                     <h2 className="text-5xl md:text-7xl font-black text-white tracking-tighter uppercase italic leading-none">
+                        Our <span className="text-primary not-italic">Heartbeat</span> is People
+                     </h2>
+                     <p className="text-xl text-slate-300 leading-relaxed italic max-w-xl">
+                        Beyond the technology and the reports, we are a community of caregivers. We celebrate life, support recovery, and treat every patient like family. Our culture is built on empathy and mutual respect.
+                     </p>
+                     <div className="flex flex-wrap gap-8">
+                        <div className="flex items-center gap-4">
+                           <div className="w-16 h-16 bg-primary/20 rounded-2xl flex items-center justify-center border border-primary/30">
+                              <Heart className="h-8 w-8 text-primary" />
+                           </div>
+                           <div>
+                              <p className="text-white font-black italic uppercase tracking-tighter text-xl leading-none">Empathy</p>
+                              <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mt-1 italic">Care Standard</p>
+                           </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                           <div className="w-16 h-16 bg-blue-500/20 rounded-2xl flex items-center justify-center border border-blue-500/30">
+                              <Users className="h-8 w-8 text-blue-400" />
+                           </div>
+                           <div>
+                              <p className="text-white font-black italic uppercase tracking-tighter text-xl leading-none">Unity</p>
+                              <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mt-1 italic">Team Dynamic</p>
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+                  <div className="relative group">
+                     <div className="aspect-square rounded-[60px] overflow-hidden shadow-2xl relative z-10 border-8 border-white/10">
+                        <Image
+                          src="/images/ceo/ceo-culture.jpg"
+                          fill
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
+                          alt="CEO with community"
+                        />
+                     </div>
+                     <div className="absolute -bottom-10 -left-10 w-48 h-48 bg-primary/30 rounded-full blur-[80px]" />
+                  </div>
+               </div>
+            </div>
          </div>
       </section>
 

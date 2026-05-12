@@ -102,7 +102,13 @@ export const businessInfo = {
   motto: "Fast, Clear, and Accurate Images",
   contacts: ["0555 777 333", "0501 239 383"],
   email: "gracediagnosticgh@gmail.com",
-  surchargeNote: "After working time 70gh extra"
+  surchargeNote: "After working time 70gh extra",
+  ceo: {
+    name: "Mrs. Grace Mensah",
+    title: "Founder & CEO",
+    message: "Our commitment to 'Fast, Clear, and Accurate Images' is the heartbeat of Grace Diagnostic Centre. We believe that every patient deserves the highest standard of precision, delivered with speed and compassion, to ensure the best possible health outcomes for our community.",
+    vision: "To humanize diagnostic technology and make world-class imaging accessible to all."
+  }
 };
 
 export const branches: Branch[] = [
