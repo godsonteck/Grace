@@ -69,6 +69,8 @@ export interface Invoice {
   status: "paid" | "unpaid";
   branchName: string;
   branchId?: string;
+  issuedBy?: string;
+  issuedById?: string;
 }
 
 export interface Staff {

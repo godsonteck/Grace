@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { useData } from "@/context/DataContext";
 import { useAuth } from "@/context/AuthContext";
-import { branches, Invoice } from "@/lib/data";
+import { branches, Invoice, businessInfo } from "@/lib/data";
 import {
   Plus, X, ChevronLeft, ShieldCheck, CheckCircle2, Lock, Key, Receipt, TrendingUp, ArrowRight, CreditCard, Printer, Search, ShoppingCart
 } from "lucide-react";
@@ -41,12 +41,15 @@ export default function POSPage() {
 
   const stats = useMemo(() => {
     const paidInvoices = invoices.filter(i => i.status === "paid");
+    const operatorPaidInvoices = paidInvoices.filter(i => i.issuedById === user?.id);
     return {
       todayRevenue: paidInvoices.reduce((acc, curr) => acc + curr.amount, 0),
+      operatorRevenue: operatorPaidInvoices.reduce((acc, curr) => acc + curr.amount, 0),
       count: paidInvoices.length,
+      operatorCount: operatorPaidInvoices.length,
       unpaid: invoices.filter(i => i.status === "unpaid").length,
     };
-  }, [invoices]);
+  }, [invoices, user]);
 
   const handleCreateInvoice = (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,6 +73,8 @@ export default function POSPage() {
       status: "unpaid",
       branchName: branch.name,
       branchId: branch.id,
+      issuedBy: user?.name || "System Operator",
+      issuedById: user?.id,
     };
 
     addInvoice(newInvoice);
@@ -129,13 +134,13 @@ export default function POSPage() {
         <div className="flex items-center gap-16">
           <div className="hidden lg:flex items-center gap-12">
             <div className="text-right">
-              <p className="text-[10px] text-slate-500 uppercase font-black tracking-[0.3em] mb-2 italic">Shift Collection</p>
+              <p className="text-[10px] text-slate-500 uppercase font-black tracking-[0.3em] mb-2 italic">Global Yield</p>
               <p className="text-3xl font-black text-white leading-none tracking-tighter">GH₵{stats.todayRevenue.toLocaleString()}</p>
             </div>
             <div className="h-10 w-px bg-slate-800" />
             <div className="text-right">
-              <p className="text-[10px] text-slate-500 uppercase font-black tracking-[0.3em] mb-2 italic">Queue Depth</p>
-              <p className="text-3xl font-black text-primary leading-none tracking-tighter">{stats.unpaid}</p>
+              <p className="text-[10px] text-primary uppercase font-black tracking-[0.3em] mb-2 italic">Your Collection</p>
+              <p className="text-3xl font-black text-primary leading-none tracking-tighter">GH₵{stats.operatorRevenue.toLocaleString()}</p>
             </div>
           </div>
 
@@ -240,8 +245,9 @@ export default function POSPage() {
                 </h3>
                 <div className="space-y-10">
                    <div className="p-10 rounded-[45px] bg-slate-800/40 border-2 border-slate-700/50 italic shadow-inner">
-                      <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.4em] mb-3 italic">Node Yield Today</p>
-                      <p className="text-6xl font-black text-primary tracking-tighter">GH₵{stats.todayRevenue.toLocaleString()}</p>
+                      <p className="text-[10px] text-primary font-black uppercase tracking-[0.4em] mb-3 italic">Your Operator Total</p>
+                      <p className="text-6xl font-black text-primary tracking-tighter">GH₵{stats.operatorRevenue.toLocaleString()}</p>
+                      <p className="text-[10px] text-slate-500 font-bold uppercase mt-2 italic">Invoices: {stats.operatorCount}</p>
                    </div>
                    <div className="p-10 rounded-[45px] bg-slate-800/40 border-2 border-slate-700/50 italic shadow-inner flex justify-between items-center">
                       <div>
@@ -279,6 +285,7 @@ export default function POSPage() {
                       <div className="flex justify-between text-xs font-black uppercase text-slate-400 italic tracking-widest"><span>Patient Case</span> <span className="text-secondary underline decoration-primary decoration-2">{receiptToPrint.patientName}</span></div>
                       <div className="flex justify-between text-xs font-black uppercase text-slate-400 italic tracking-widest"><span>Service Node</span> <span className="text-secondary">{receiptToPrint.scanName}</span></div>
                       <div className="flex justify-between text-xs font-black uppercase text-slate-400 italic tracking-widest"><span>Voucher ID</span> <span className="text-slate-300 font-mono">{receiptToPrint.id}</span></div>
+                      <div className="flex justify-between text-xs font-black uppercase text-slate-400 italic tracking-widest"><span>Issued By</span> <span className="text-secondary">{receiptToPrint.issuedBy}</span></div>
                       <div className="flex justify-between text-4xl font-black text-secondary tracking-tighter pt-8 uppercase italic underline decoration-primary decoration-8 underline-offset-8"><span>Total</span> <span>GH₵{receiptToPrint.amount.toLocaleString()}</span></div>
                    </div>
                    <button className="w-full mt-auto bg-secondary text-white py-8 rounded-[40px] font-black uppercase tracking-[0.3em] text-xs flex items-center justify-center gap-5 hover:bg-primary transition-all italic shadow-2xl active:scale-95">
