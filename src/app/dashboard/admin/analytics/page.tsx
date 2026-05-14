@@ -48,7 +48,7 @@ export default function AnalyticsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
            {[
              { label: "Aggregate Throughput", value: metrics.totalApts, trend: "+12.5%", up: true, icon: Activity, color: "text-blue-600", bg: "bg-blue-50" },
-             { label: "Clinical Yield ($)", value: `$${metrics.totalRev.toLocaleString()}`, trend: "+8.2%", up: true, icon: TrendingUp, color: "text-green-600", bg: "bg-green-50" },
+             { label: "Clinical Yield (GH₵)", value: `GH₵${metrics.totalRev.toLocaleString()}`, trend: "+8.2%", up: true, icon: TrendingUp, color: "text-green-600", bg: "bg-green-50" },
              { label: "Verification Velocity", value: "0.8h", trend: "-15%", up: false, icon: Zap, color: "text-purple-600", bg: "bg-purple-50" },
              { label: "Active Cohort", value: metrics.pendingApts, trend: "Stable", up: true, icon: Users, color: "text-orange-600", bg: "bg-orange-50" },
            ].map((stat, i) => (
@@ -82,7 +82,7 @@ export default function AnalyticsPage() {
                             <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 italic mb-1">{s.name}</p>
                             <p className="text-lg font-black text-secondary italic tracking-tighter underline decoration-primary decoration-2 underline-offset-4">{s.count} PROCEDURES</p>
                          </div>
-                         <p className="text-2xl font-black text-primary italic tracking-tighter">${s.rev.toLocaleString()}</p>
+                         <p className="text-2xl font-black text-primary italic tracking-tighter">GH₵{s.rev.toLocaleString()}</p>
                       </div>
                       <div className="h-2 w-full bg-slate-50 rounded-full overflow-hidden border border-slate-100 p-0.5">
                          <div className="h-full bg-primary rounded-full transition-all duration-1000" style={{ width: metrics.totalRev > 0 ? `${(s.rev / metrics.totalRev) * 100}%` : '0%' }} />
