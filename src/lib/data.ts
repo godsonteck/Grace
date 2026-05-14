@@ -217,7 +217,7 @@ export const bodyParts: BodyPart[] = [
   { id: "us-breast", name: "BREAST (PER ONE)", scanTypeId: "ultrasound-scan", category: "Chest", price: 200, duration: "20 mins", preparation: "No talcum powder or deodorant." },
   { id: "us-scrotum", name: "SCROTUM", scanTypeId: "ultrasound-scan", category: "Urology", price: 250, duration: "20 mins", preparation: "No special preparation." },
   { id: "us-msk", name: "MSK", scanTypeId: "ultrasound-scan", category: "Musculoskeletal", price: 250, duration: "25 mins", preparation: "No special preparation." },
-  { id: "us-anomaly", name: "ANOMALLY", scanTypeId: "ultrasound-scan", category: "Obstetric", price: 200, duration: "45 mins", preparation: "No special preparation." },
+  { id: "us-anomaly", name: "ANOMALLY", scanTypeId: "ultrasound-scan", category: "Obstetric", price: 250, duration: "45 mins", preparation: "No special preparation." },
   { id: "us-urology-prostate", name: "UROLOGY / PROSTATE", scanTypeId: "ultrasound-scan", category: "Urology", price: 200, duration: "20 mins", preparation: "Full bladder required." },
   { id: "us-superficial-swelling", name: "SUPERFICIAL SWELLING", scanTypeId: "ultrasound-scan", category: "General", price: 200, duration: "15 mins", preparation: "No special preparation." },
   { id: "us-arterial-doppler", name: "ARTERIAL DOPPLER (ONE LEG)", scanTypeId: "ultrasound-scan", category: "Vascular", price: 400, duration: "30 mins", preparation: "No special preparation." },

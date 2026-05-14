@@ -288,9 +288,9 @@ function BookContent() {
 
               {selectedScan && (
                 <div className="mt-12 p-8 bg-primary/5 rounded-[35px] border-2 border-primary/10 flex gap-8 items-center">
-                  <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center text-primary shadow-xl shadow-primary/5 shrink-0 rotate-3 font-black text-4xl italic">$</div>
+                  <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center text-primary shadow-xl shadow-primary/5 shrink-0 rotate-3 font-black text-2xl italic whitespace-nowrap">GH₵</div>
                   <div>
-                    <h4 className="text-2xl font-black text-secondary tracking-tighter italic uppercase underline decoration-primary decoration-4 underline-offset-4 mb-2">Aggregate Cost: ${selectedScan.price}</h4>
+                    <h4 className="text-2xl font-black text-secondary tracking-tighter italic uppercase underline decoration-primary decoration-4 underline-offset-4 mb-2">Aggregate Cost: GH₵{selectedScan.price.toLocaleString()}</h4>
                     <p className="text-sm text-slate-400 font-medium italic">Includes diagnostic acquisition and secure report delivery. <br/>Prep: {selectedScan.preparation}</p>
                   </div>
                 </div>

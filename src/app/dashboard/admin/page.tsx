@@ -300,7 +300,7 @@ export default function AdminPage() {
             <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                 {[
-                  { label: "Aggregate Revenue", value: `$${stats.totalRevenue.toLocaleString()}`, icon: TrendingUp, color: "text-green-600", bg: "bg-green-50" },
+                  { label: "Aggregate Revenue", value: `GH₵${stats.totalRevenue.toLocaleString()}`, icon: TrendingUp, color: "text-green-600", bg: "bg-green-50" },
                   { label: "Unit Personnel", value: stats.staffCount, icon: Users, color: "text-blue-600", bg: "bg-blue-50" },
                   { label: "Center Backlog", value: stats.pendingAppointments, icon: ClipboardList, color: "text-orange-600", bg: "bg-orange-50" },
                   { label: "Hardware Health", value: "99.9%", icon: ShieldCheck, color: "text-purple-600", bg: "bg-purple-50" },
@@ -357,7 +357,7 @@ export default function AdminPage() {
                             <div key={i} className="space-y-4">
                                <div className="flex justify-between items-end">
                                   <p className="text-xs font-black uppercase tracking-[0.3em] text-slate-500 italic">{b.name}</p>
-                                  <p className="text-4xl font-black text-primary italic tracking-tighter">${b.rev.toLocaleString()}</p>
+                                  <p className="text-4xl font-black text-primary italic tracking-tighter">GH₵{b.rev.toLocaleString()}</p>
                                </div>
                                <div className="h-3 w-full bg-slate-800 rounded-full overflow-hidden border border-slate-700 p-0.5">
                                   <div className="h-full bg-primary rounded-full transition-all duration-1000 shadow-[0_0_15px_#C8A97E]" style={{ width: stats.totalRevenue > 0 ? `${(b.rev / stats.totalRevenue) * 100}%` : '0%' }} />
@@ -384,7 +384,7 @@ export default function AdminPage() {
                         <div key={i} className="space-y-3">
                            <div className="flex justify-between text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
                               <span>{item.label}</span>
-                              <span className="text-secondary font-black">${item.rev.toLocaleString()}</span>
+                              <span className="text-secondary font-black">GH₵{item.rev.toLocaleString()}</span>
                            </div>
                            <div className="h-4 w-full bg-slate-50 rounded-full overflow-hidden border border-slate-100">
                               <div className={cn("h-full transition-all duration-1000", item.color)} style={{ width: stats.totalRevenue > 0 ? `${(item.rev / stats.totalRevenue) * 100}%` : '0%' }} />
@@ -546,7 +546,7 @@ export default function AdminPage() {
                        <thead>
                          <tr className="bg-slate-50 text-[10px] font-black uppercase text-slate-400 tracking-[0.3em]">
                            <th className="px-12 py-8">Procedure</th>
-                           <th className="px-12 py-8 text-center">Fee ($)</th>
+                           <th className="px-12 py-8 text-center">Fee (GH₵)</th>
                            <th className="px-12 py-8 text-right">Ops</th>
                          </tr>
                        </thead>
@@ -554,7 +554,7 @@ export default function AdminPage() {
                          {filteredRecords.map(r => (
                            <tr key={r.id} className="hover:bg-slate-50 transition-colors group">
                              <td className="px-12 py-8 font-black text-secondary text-base italic uppercase">{r.name}</td>
-                             <td className="px-12 py-8 text-center font-black text-secondary text-2xl tracking-tighter italic">${r.price.toLocaleString()}</td>
+                             <td className="px-12 py-8 text-center font-black text-secondary text-2xl tracking-tighter italic">GH₵{r.price.toLocaleString()}</td>
                              <td className="px-12 py-8 text-right">
                                 <div className="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
                                    <button onClick={() => handleOpenRecordModal(r)} className="p-4 bg-white border shadow-sm rounded-2xl hover:bg-secondary hover:text-white transition-all"><Edit2 className="h-4 w-4" /></button>
@@ -673,7 +673,7 @@ export default function AdminPage() {
                    </div>
                    <div className="grid grid-cols-2 gap-12">
                       <div className="space-y-6">
-                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.6em] ml-8 italic font-black">Unit Fee ($)</label>
+                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.6em] ml-8 italic font-black">Unit Fee (GH₵)</label>
                         <input type="number" className="w-full px-12 py-10 rounded-[50px] border-4 border-slate-50 focus:border-primary outline-none font-black text-4xl italic text-primary tracking-tighter shadow-sm" value={recordForm.price} onChange={e => setRecordRecordForm({...recordForm, price: parseInt(e.target.value) || 0})} />
                       </div>
                       <div className="space-y-6">

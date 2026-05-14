@@ -186,7 +186,7 @@ function ScansContent() {
                   <div className="pt-6 border-t">
                     <div className="flex justify-between items-center mb-6">
                       <span className="text-sm font-medium text-slate-500">Service Fee</span>
-                      <span className="text-2xl font-bold text-secondary">${activePart.price}</span>
+                      <span className="text-2xl font-bold text-secondary">GH₵{activePart.price.toLocaleString()}</span>
                     </div>
                     <button
                       onClick={() => router.push(`/web/book?scanId=${activePart.id}`)}

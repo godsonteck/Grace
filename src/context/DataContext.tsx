@@ -242,7 +242,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
   const addInvoice = async (inv: Invoice) => {
     setInvoices(p => [inv, ...p]);
-    logAction(`Invoice generated for ${inv.patientName}: $${inv.amount}`, "Billing");
+    logAction(`Invoice generated for ${inv.patientName}: GH₵${inv.amount}`, "Billing");
     addToQueue('ADD_INVOICE', inv);
     try {
       await fetch('/api/invoices', {

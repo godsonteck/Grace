@@ -186,7 +186,7 @@ export default function POSPage() {
                   <th className="px-12 py-8">Case Identity</th>
                   <th className="px-12 py-8 text-center">Priority</th>
                   <th className="px-12 py-8">Procedure Protocol</th>
-                  <th className="px-12 py-8 text-center">Fee ($)</th>
+                  <th className="px-12 py-8 text-center">Fee (GH₵)</th>
                   <th className="px-12 py-8 text-right">Ops</th>
                 </tr>
               </thead>

@@ -69,8 +69,8 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
                       <span className="text-xs font-bold uppercase tracking-widest">{p.duration}</span>
                     </div>
                     <div className="flex items-center gap-3 text-slate-500">
-                      <DollarSign className="h-4 w-4 text-primary" />
-                      <span className="text-xs font-bold uppercase tracking-widest">${p.price}</span>
+                      <div className="text-[10px] font-black text-primary">GH₵</div>
+                      <span className="text-xs font-bold uppercase tracking-widest">GH₵{p.price.toLocaleString()}</span>
                     </div>
                   </div>
                   <div className="p-4 bg-slate-50 rounded-2xl">
