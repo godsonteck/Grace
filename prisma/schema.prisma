@@ -1,0 +1,136 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Branch {
+  id           String        @id @default(cuid())
+  name         String
+  address      String
+  phone        String
+  email        String
+  appointments Appointment[]
+  equipment    Equipment[]
+  staff        Staff[]
+  invoices     Invoice[]
+  patients     Patient[]
+  reports      DiagnosticReport[]
+  referrals    ReferralDoctor[]
+}
+
+model Patient {
+  id           String             @id @default(cuid())
+  name         String
+  email        String             @unique
+  phone        String
+  dob          DateTime
+  gender       String
+  bloodGroup   String?
+  branchId     String?
+  branch       Branch?            @relation(fields: [branchId], references: [id])
+  appointments Appointment[]
+  reports      DiagnosticReport[]
+
+  @@index([branchId])
+}
+
+model Appointment {
+  id              String            @id @default(cuid())
+  patientId       String
+  branchId        String
+  scanId          String
+  scanName        String
+  date            DateTime
+  time            String
+  status          String            @default("pending")
+  priority        String            @default("normal") // normal, urgent
+  referringDoctor String?
+  notes           String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  branch          Branch            @relation(fields: [branchId], references: [id])
+  patient         Patient           @relation(fields: [patientId], references: [id])
+  report          DiagnosticReport?
+
+  @@index([branchId])
+  @@index([patientId])
+}
+
+model DiagnosticReport {
+  id            String      @id @default(cuid())
+  appointmentId String      @unique
+  patientId     String
+  branchId      String?
+  resultId      String      @unique @default(cuid())
+  content       String
+  imageUrl      String?
+  statFlag      Boolean     @default(false)
+  type          String      @default("RADIOLOGY")
+  labValues     String?
+  createdAt     DateTime    @default(now())
+  patient       Patient     @relation(fields: [patientId], references: [id])
+  appointment   Appointment @relation(fields: [appointmentId], references: [id])
+  branch        Branch?     @relation(fields: [branchId], references: [id])
+
+  @@index([branchId])
+  @@index([patientId])
+}
+
+model ReferralDoctor {
+  id        String   @id @default(cuid())
+  name      String
+  facility  String?
+  phone     String?
+  email     String?
+  branchId  String?
+  branch    Branch?  @relation(fields: [branchId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@index([branchId])
+}
+
+model Staff {
+  id       String @id @default(cuid())
+  name     String
+  role     String
+  branchId String
+  phone    String
+  email    String
+  status   String @default("active")
+  branch   Branch @relation(fields: [branchId], references: [id])
+}
+
+model Equipment {
+  id              String   @id @default(cuid())
+  name            String
+  type            String
+  branchId        String
+  lastMaintenance DateTime
+  status          String   @default("operational")
+  branch          Branch   @relation(fields: [branchId], references: [id])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  user      String
+  action    String
+  module    String
+  branchId  String?
+  timestamp DateTime @default(now())
+}
+
+model Invoice {
+  id          String   @id @default(cuid())
+  patientName String
+  scanName    String
+  amount      Int
+  date        DateTime @default(now())
+  status      String   @default("unpaid")
+  branchName  String
+  branchId    String?
+  branch      Branch?  @relation(fields: [branchId], references: [id])
+}

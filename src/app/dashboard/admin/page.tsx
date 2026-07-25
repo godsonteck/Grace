@@ -1,20 +1,19 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { scanTypes, branches, BodyPart, Invoice, Staff, Equipment, Appointment, Patient } from "@/lib/data";
 import { useData } from "@/context/DataContext";
 import { useAuth } from "@/context/AuthContext";
+import { branches } from "@/lib/data";
 import {
-  LayoutDashboard, Plus, Search, Edit2, Trash2, DollarSign,
-  Settings, Users, X, Save, Calendar, CheckCircle, Clock,
-  Printer, CreditCard, ShoppingCart, ArrowRight, RefreshCw, Wifi, WifiOff, BarChart3, TrendingUp, Monitor, HardDrive, ShieldCheck, ClipboardList, Briefcase, UserPlus, FileText, Activity, AlertTriangle, LogOut, Microscope, MapPin, ChevronDown
+  LayoutDashboard, Plus, Edit2, Trash2,
+  Settings, X, CheckCircle, TrendingUp, Monitor, HardDrive, ShieldCheck, ClipboardList, Briefcase, Stethoscope, Beaker, Search, MapPin, RefreshCw, Users, AlertCircle, FileText, UserPlus, Activity, ArrowRight, Microscope
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 export default function AdminPage() {
   const {
-    records, appointments, invoices, staff, equipment, auditLogs, patients, isOnline, isSyncing,
+    records, appointments, invoices, staff, equipment, auditLogs, patients, isSyncing,
     addRecord, updateRecord, deleteRecord,
     updateAppointment, attachReport, addStaff, updateStaff, deleteStaff, addEquipment, updateEquipment, deleteEquipment,
     addPatient, updatePatient, syncData
@@ -33,12 +32,12 @@ export default function AdminPage() {
 
   // Form States
   const [recordForm, setRecordRecordForm] = useState({ name: "", scanTypeId: "ct-scan", category: "General", price: 0, duration: "20 mins", preparation: "" });
-  const [staffForm, setStaffForm] = useState<Staff>({ id: "", name: "", role: "Radiologist", branchId: branches[0].id, phone: "", email: "", status: "active" });
-  const [equipForm, setEquipForm] = useState<Equipment>({ id: "", name: "", type: "CT Scanner", branchId: branches[0].id, lastMaintenance: "", status: "operational" });
-  const [patientForm, setPatientForm] = useState<Patient>({ id: "", name: "", email: "", phone: "", dob: "", gender: "Male", bloodGroup: "O+", history: [] });
+  const [staffForm, setStaffForm] = useState<any>({ id: "", name: "", role: "Radiologist", branchId: branches[0].id, phone: "", email: "", status: "active" });
+  const [equipForm, setEquipForm] = useState<any>({ id: "", name: "", type: "CT Scanner", branchId: branches[0].id, lastMaintenance: "", status: "operational" });
+  const [patientForm, setPatientForm] = useState<any>({ id: "", name: "", email: "", phone: "", dob: "", gender: "Male", bloodGroup: "O+", history: [] });
   const [reportContent, setReportContent] = useState("");
 
-  const handleOpenStaffModal = (member?: Staff) => {
+  const handleOpenStaffModal = (member?: any) => {
     setModalType("staff");
     if (member) {
       setEditingItem(member);
@@ -50,7 +49,7 @@ export default function AdminPage() {
     setIsModalOpen(true);
   };
 
-  const handleOpenEquipModal = (item?: Equipment) => {
+  const handleOpenEquipModal = (item?: any) => {
     setModalType("equipment");
     if (item) {
       setEditingItem(item);
@@ -62,7 +61,7 @@ export default function AdminPage() {
     setIsModalOpen(true);
   };
 
-  const handleOpenRecordModal = (record?: BodyPart) => {
+  const handleOpenRecordModal = (record?: any) => {
     setModalType("record");
     if (record) {
       setEditingItem(record);
@@ -74,7 +73,7 @@ export default function AdminPage() {
     setIsModalOpen(true);
   };
 
-  const handleOpenPatientModal = (pt?: Patient) => {
+  const handleOpenPatientModal = (pt?: any) => {
     setModalType("patient");
     if (pt) {
       setEditingItem(pt);
@@ -86,7 +85,7 @@ export default function AdminPage() {
     setIsModalOpen(true);
   };
 
-  const handleOpenReportModal = (apt: Appointment) => {
+  const handleOpenReportModal = (apt: any) => {
     setModalType("report");
     setEditingItem(apt);
     setReportContent("");
@@ -116,6 +115,10 @@ export default function AdminPage() {
       const matchesSearch = a.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            a.scanName.toLowerCase().includes(searchTerm.toLowerCase());
       return matchesBranch && matchesSearch;
+    }).sort((a, b) => {
+      if (a.priority === "urgent" && b.priority !== "urgent") return -1;
+      if (a.priority !== "urgent" && b.priority === "urgent") return 1;
+      return 0;
     }),
     [appointments, globalBranchFilter, searchTerm]
   );
@@ -188,7 +191,7 @@ export default function AdminPage() {
       xrRev: paidInvoices.filter(i => i.scanName.toLowerCase().includes("x-ray") || i.scanName.toLowerCase().includes("xr")).reduce((acc, curr) => acc + curr.amount, 0),
       usRev: paidInvoices.filter(i => i.scanName.toLowerCase().includes("ultrasound") || i.scanName.toLowerCase().includes("us")).reduce((acc, curr) => acc + curr.amount, 0),
       branchBreakdown: branches.map(b => ({
-        name: b.name.split("-")[1].trim(),
+        name: b.name.includes("-") ? b.name.split("-")[1].trim() : b.name,
         rev: filteredInvoices.filter(i => i.branchName === b.name && i.status === "paid").reduce((acc, curr) => acc + curr.amount, 0)
       }))
     };
@@ -196,8 +199,10 @@ export default function AdminPage() {
 
   const navItems = [
     { id: "dashboard", name: "Executive Suite", icon: LayoutDashboard, roles: ['ADMIN'] },
-    { id: "reports", name: "Financial Intel", icon: BarChart3, roles: ['ADMIN'] },
-    { id: "appointments", name: "Clinical Pipeline", icon: Microscope, badge: stats.pendingAppointments, roles: ['ADMIN', 'RADIOLOGIST'] },
+    { id: "reports", name: "Financial Intel", icon: TrendingUp, roles: ['ADMIN'] },
+    { id: "analytics", name: "Clinical Analytics", icon: Activity, roles: ['ADMIN'], path: "/dashboard/admin/analytics" },
+    { id: "lab-hub", name: "Laboratory Hub", icon: Beaker, roles: ['ADMIN', 'RADIOLOGIST'], path: "/dashboard/admin/lab" },
+    { id: "appointments", name: "Clinical Pipeline", icon: ClipboardList, badge: stats.pendingAppointments, roles: ['ADMIN', 'RADIOLOGIST'] },
     { id: "patients", name: "Patient EHR", icon: Users, roles: ['ADMIN', 'RADIOLOGIST'] },
     { id: "staff", name: "Human Capital", icon: Briefcase, roles: ['ADMIN'] },
     { id: "inventory", name: "Asset Registry", icon: HardDrive, badge: stats.equipmentAlerts, roles: ['ADMIN', 'RADIOLOGIST'] },
@@ -223,7 +228,18 @@ export default function AdminPage() {
         </div>
 
         <nav className="flex-grow p-6 space-y-1 overflow-y-auto custom-scrollbar">
-          {filteredNav.map((item) => (
+          {filteredNav.map((item: any) => (
+            item.path ? (
+              <Link key={item.id} href={item.path} className={cn(
+                "w-full flex items-center justify-between px-5 py-4 rounded-[20px] transition-all duration-300",
+                "text-slate-500 hover:text-white hover:bg-slate-800/50"
+              )}>
+                <div className="flex items-center gap-4">
+                  <item.icon className="h-5 w-5" />
+                  <span className="text-sm font-bold uppercase tracking-widest text-[10px]">{item.name}</span>
+                </div>
+              </Link>
+            ) : (
             <button key={item.id} onClick={() => { setActiveTab(item.id); setSearchTerm(""); }} className={cn(
                 "w-full flex items-center justify-between px-5 py-4 rounded-[20px] transition-all duration-300",
                 activeTab === item.id ? "bg-primary text-white shadow-xl shadow-primary/20 scale-[1.02]" : "text-slate-500 hover:text-white hover:bg-slate-800/50"
@@ -236,6 +252,7 @@ export default function AdminPage() {
                 <span className={cn("text-[10px] font-black px-2 py-0.5 rounded-full", item.id === "inventory" ? "bg-orange-500" : "bg-red-500")}>{item.badge}</span>
               )}
             </button>
+            )
           ))}
         </nav>
 
@@ -250,7 +267,7 @@ export default function AdminPage() {
              </div>
              <button onClick={logout} className="w-full py-3 rounded-xl bg-slate-800/50 text-[10px] font-black uppercase tracking-widest text-red-400 hover:bg-red-500 hover:text-white transition-all">Terminate</button>
           </div>
-          <Link href="/pos" className="w-full flex items-center justify-center gap-3 bg-primary/10 hover:bg-primary text-primary hover:text-white py-4 rounded-[25px] text-[10px] font-black uppercase tracking-[0.2em] transition-all border border-primary/20">
+          <Link href="/dashboard/pos" className="w-full flex items-center justify-center gap-3 bg-primary/10 hover:bg-primary text-primary hover:text-white py-4 rounded-[25px] text-[10px] font-black uppercase tracking-[0.2em] transition-all border border-primary/20">
             <Monitor className="h-4 w-4" /> Launch POS
           </Link>
         </div>
@@ -269,7 +286,7 @@ export default function AdminPage() {
                <div className="p-3 bg-white rounded-2xl shadow-sm text-primary"><MapPin className="h-4 w-4" /></div>
                <select className="bg-transparent border-none outline-none pr-8 font-black text-[10px] uppercase tracking-widest text-slate-500 appearance-none cursor-pointer" value={globalBranchFilter} onChange={(e) => setGlobalBranchFilter(e.target.value)}>
                   <option value="all">Global (All Centers)</option>
-                  {branches.map(b => <option key={b.id} value={b.id}>{b.name.split("-")[1].trim()}</option>)}
+                  {branches.map(b => <option key={b.id} value={b.id}>{b.name.includes("-") ? b.name.split("-")[1].trim().toUpperCase() : b.name.toUpperCase()}</option>)}
                </select>
             </div>
           </div>
@@ -283,10 +300,10 @@ export default function AdminPage() {
             <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                 {[
-                  { label: "Aggregate Revenue", value: `$${stats.totalRevenue.toLocaleString()}`, icon: DollarSign, color: "text-green-600", bg: "bg-green-50" },
+                  { label: "Aggregate Revenue", value: `GH₵${stats.totalRevenue.toLocaleString()}`, icon: TrendingUp, color: "text-green-600", bg: "bg-green-50" },
                   { label: "Unit Personnel", value: stats.staffCount, icon: Users, color: "text-blue-600", bg: "bg-blue-50" },
-                  { label: "Center Backlog", value: stats.pendingAppointments, icon: Clock, color: "text-orange-600", bg: "bg-orange-50" },
-                  { label: "Hardware Health", value: "99.9%", icon: Activity, color: "text-purple-600", bg: "bg-purple-50" },
+                  { label: "Center Backlog", value: stats.pendingAppointments, icon: ClipboardList, color: "text-orange-600", bg: "bg-orange-50" },
+                  { label: "Hardware Health", value: "99.9%", icon: ShieldCheck, color: "text-purple-600", bg: "bg-purple-50" },
                 ].map((stat, i) => (
                   <div key={i} className="bg-white p-8 rounded-[40px] border border-white shadow-[0_20px_50px_rgba(0,0,0,0.04)] flex flex-col justify-between hover:scale-[1.05] transition-all cursor-default relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-8 opacity-0 group-hover:opacity-10 group-hover:translate-x-4 transition-all"><stat.icon className="h-20 w-20" /></div>
@@ -311,12 +328,12 @@ export default function AdminPage() {
                        {filteredEquipment.slice(0, 4).map(e => (
                          <div key={e.id} className="group flex items-center justify-between p-7 rounded-[30px] bg-slate-50 hover:bg-white border-2 border-transparent hover:border-slate-100 transition-all shadow-sm hover:shadow-xl">
                             <div className="flex items-center gap-6">
-                               <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-2xl", e.status === "operational" ? "bg-green-500 shadow-green-500/30" : "bg-orange-500")}>
+                               <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-2xl", e.status === "operational" ? "bg-green-50 shadow-green-500/30" : "bg-orange-500")}>
                                   <HardDrive className="h-7 w-7" />
                                </div>
                                <div>
                                   <p className="font-black text-secondary text-base italic uppercase">{e.name}</p>
-                                  <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mt-1">{e.type} • {branches.find(b => b.id === e.branchId)?.name.split("-")[1]}</p>
+                                  <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mt-1">{e.type} • {branches.find(b => b.id === e.branchId)?.name.includes("-") ? branches.find(b => b.id === e.branchId)?.name.split("-")[1].trim() : branches.find(b => b.id === e.branchId)?.name}</p>
                                </div>
                             </div>
                             <span className={cn("text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full border", e.status === "operational" ? "bg-green-50 text-green-600 border-green-100" : "bg-orange-50 text-orange-600 border-orange-100")}>{e.status}</span>
@@ -331,11 +348,16 @@ export default function AdminPage() {
                     <div className="relative z-10 h-full flex flex-col">
                        <h3 className="text-2xl font-black italic tracking-tighter uppercase mb-12 flex items-center gap-3 underline decoration-primary decoration-4">Revenue Intel <Activity className="h-6 w-6 text-primary" /></h3>
                        <div className="space-y-12 flex-grow">
-                          {stats.branchBreakdown.filter(b => globalBranchFilter === "all" || b.name === branches.find(br => br.id === globalBranchFilter)?.name.split("-")[1].trim()).map((b, i) => (
+                          {stats.branchBreakdown.filter(b => {
+                            if (globalBranchFilter === "all") return true;
+                            const br = branches.find(branch => branch.id === globalBranchFilter);
+                            const name = br?.name.includes("-") ? br.name.split("-")[1].trim() : br?.name;
+                            return b.name.toUpperCase() === name?.toUpperCase();
+                          }).map((b, i) => (
                             <div key={i} className="space-y-4">
                                <div className="flex justify-between items-end">
                                   <p className="text-xs font-black uppercase tracking-[0.3em] text-slate-500 italic">{b.name}</p>
-                                  <p className="text-4xl font-black text-primary italic tracking-tighter">${b.rev.toLocaleString()}</p>
+                                  <p className="text-4xl font-black text-primary italic tracking-tighter">GH₵{b.rev.toLocaleString()}</p>
                                </div>
                                <div className="h-3 w-full bg-slate-800 rounded-full overflow-hidden border border-slate-700 p-0.5">
                                   <div className="h-full bg-primary rounded-full transition-all duration-1000 shadow-[0_0_15px_#C8A97E]" style={{ width: stats.totalRevenue > 0 ? `${(b.rev / stats.totalRevenue) * 100}%` : '0%' }} />
@@ -362,7 +384,7 @@ export default function AdminPage() {
                         <div key={i} className="space-y-3">
                            <div className="flex justify-between text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
                               <span>{item.label}</span>
-                              <span className="text-secondary font-black">${item.rev.toLocaleString()}</span>
+                              <span className="text-secondary font-black">GH₵{item.rev.toLocaleString()}</span>
                            </div>
                            <div className="h-4 w-full bg-slate-50 rounded-full overflow-hidden border border-slate-100">
                               <div className={cn("h-full transition-all duration-1000", item.color)} style={{ width: stats.totalRevenue > 0 ? `${(item.rev / stats.totalRevenue) * 100}%` : '0%' }} />
@@ -411,26 +433,40 @@ export default function AdminPage() {
                           <th className="px-12 py-8">Case ID</th>
                           <th className="px-12 py-8">Clinical Group</th>
                           <th className="px-12 py-8 text-center">Verification Status</th>
-                          <th className="px-12 py-8 text-right">Settlement</th>
+                          <th className="px-12 py-8 text-right">Ops</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-50">
                         {filteredAppointments.map(apt => (
-                          <tr key={apt.id} className="hover:bg-primary/[0.01] transition-all group">
+                          <tr key={apt.id} className={cn("hover:bg-primary/[0.01] transition-all group", apt.priority === 'urgent' && "bg-red-50/30")}>
                             <td className="px-12 py-8">
-                               <p className="font-black text-secondary text-base italic uppercase underline decoration-slate-100 group-hover:decoration-primary group-hover:text-primary transition-all">{apt.patientName}</p>
-                               <div className="flex items-center gap-2 mt-2">
-                                  <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">{branches.find(b => b.id === apt.branchId)?.name.split("-")[1]}</span>
-                                  <span className="text-slate-200">•</span>
-                                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest italic">{apt.date}</span>
+                               <div className="flex items-center gap-4">
+                                  {apt.priority === 'urgent' && <AlertCircle className="h-5 w-5 text-red-500 animate-pulse" />}
+                                  <div>
+                                     <p className="font-black text-secondary text-base italic uppercase underline decoration-slate-100 group-hover:decoration-primary group-hover:text-primary transition-all">{apt.patientName}</p>
+                                     <div className="flex items-center gap-2 mt-2">
+                                        <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">{branches.find(b => b.id === apt.branchId)?.name.includes("-") ? branches.find(b => b.id === apt.branchId)?.name.split("-")[1].trim() : branches.find(b => b.id === apt.branchId)?.name}</span>
+                                        <span className="text-slate-200">•</span>
+                                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest italic">{apt.date}</span>
+                                        {apt.referringDoctor && (
+                                          <>
+                                            <span className="text-slate-200">•</span>
+                                            <span className="text-[9px] font-black text-primary uppercase tracking-widest italic flex items-center gap-1"><Stethoscope className="h-3 w-3" /> {apt.referringDoctor}</span>
+                                          </>
+                                        )}
+                                     </div>
+                                  </div>
                                </div>
                             </td>
-                            <td className="px-12 py-8"><span className="text-xs font-black uppercase tracking-[0.1em] text-slate-500 italic">{apt.scanName}</span></td>
+                            <td className="px-12 py-8">
+                               <span className="text-xs font-black uppercase tracking-[0.1em] text-slate-500 italic">{apt.scanName}</span>
+                               {apt.priority === 'urgent' && <span className="ml-3 px-2 py-0.5 bg-red-100 text-red-600 text-[8px] font-black uppercase tracking-widest rounded-full">STAT</span>}
+                            </td>
                             <td className="px-12 py-8 text-center">
                                {apt.reportAttached ? (
                                  <span className="inline-flex items-center gap-3 text-green-600 text-[10px] font-black uppercase italic"><ShieldCheck className="h-5 w-5" /> Result Attested</span>
                                ) : (
-                                 <button onClick={() => handleOpenReportModal(apt)} className="text-primary hover:text-secondary bg-primary/5 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] transition-all border border-primary/10">Verification Pending</button>
+                                 <button onClick={() => handleOpenReportModal(apt)} className={cn("hover:text-secondary px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] transition-all border", apt.priority === 'urgent' ? "bg-red-500 text-white border-red-600" : "bg-primary/5 text-primary border-primary/10")}>Verification Pending</button>
                                )}
                             </td>
                             <td className="px-12 py-8 text-right">
@@ -491,7 +527,7 @@ export default function AdminPage() {
                                 <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.1em] mt-1">{s.email}</p>
                              </td>
                              <td className="px-12 py-8 text-center"><span className="text-xs font-black uppercase tracking-widest text-slate-500 bg-slate-100 px-4 py-1.5 rounded-full border border-slate-200">{s.role}</span></td>
-                             <td className="px-12 py-8 text-center text-xs font-black text-primary italic uppercase tracking-tighter">{branches.find(b => b.id === s.branchId)?.name.split("-")[1]}</td>
+                             <td className="px-12 py-8 text-center text-xs font-black text-primary italic uppercase tracking-tighter">{branches.find(b => b.id === s.branchId)?.name.includes("-") ? branches.find(b => b.id === s.branchId)?.name.split("-")[1].trim() : branches.find(b => b.id === s.branchId)?.name}</td>
                              <td className="px-12 py-8 text-right">
                                 <div className="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
                                    <button onClick={() => handleOpenStaffModal(s)} className="p-4 bg-white border shadow-sm rounded-2xl hover:bg-primary hover:text-white transition-all"><Edit2 className="h-4 w-4" /></button>
@@ -510,7 +546,7 @@ export default function AdminPage() {
                        <thead>
                          <tr className="bg-slate-50 text-[10px] font-black uppercase text-slate-400 tracking-[0.3em]">
                            <th className="px-12 py-8">Procedure</th>
-                           <th className="px-12 py-8 text-center">Fee ($)</th>
+                           <th className="px-12 py-8 text-center">Fee (GH₵)</th>
                            <th className="px-12 py-8 text-right">Ops</th>
                          </tr>
                        </thead>
@@ -518,7 +554,7 @@ export default function AdminPage() {
                          {filteredRecords.map(r => (
                            <tr key={r.id} className="hover:bg-slate-50 transition-colors group">
                              <td className="px-12 py-8 font-black text-secondary text-base italic uppercase">{r.name}</td>
-                             <td className="px-12 py-8 text-center font-black text-secondary text-2xl tracking-tighter italic">${r.price.toLocaleString()}</td>
+                             <td className="px-12 py-8 text-center font-black text-secondary text-2xl tracking-tighter italic">GH₵{r.price.toLocaleString()}</td>
                              <td className="px-12 py-8 text-right">
                                 <div className="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
                                    <button onClick={() => handleOpenRecordModal(r)} className="p-4 bg-white border shadow-sm rounded-2xl hover:bg-secondary hover:text-white transition-all"><Edit2 className="h-4 w-4" /></button>
@@ -616,7 +652,7 @@ export default function AdminPage() {
                       <div className="space-y-6">
                         <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.6em] ml-8 italic font-black">Node</label>
                         <select className="w-full px-12 py-10 rounded-[50px] border-4 border-slate-50 focus:border-primary outline-none font-black text-xl bg-white appearance-none italic shadow-sm tracking-tighter" value={staffForm.branchId} onChange={e => setStaffForm({...staffForm, branchId: e.target.value})}>
-                           {branches.map(b => <option key={b.id} value={b.id}>{b.name.split("-")[1].trim().toUpperCase()}</option>)}
+                           {branches.map(b => <option key={b.id} value={b.id}>{b.name.includes("-") ? b.name.split("-")[1].trim().toUpperCase() : b.name.toUpperCase()}</option>)}
                         </select>
                       </div>
                       <div className="space-y-6">
@@ -637,7 +673,7 @@ export default function AdminPage() {
                    </div>
                    <div className="grid grid-cols-2 gap-12">
                       <div className="space-y-6">
-                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.6em] ml-8 italic font-black">Unit Fee ($)</label>
+                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.6em] ml-8 italic font-black">Unit Fee (GH₵)</label>
                         <input type="number" className="w-full px-12 py-10 rounded-[50px] border-4 border-slate-50 focus:border-primary outline-none font-black text-4xl italic text-primary tracking-tighter shadow-sm" value={recordForm.price} onChange={e => setRecordRecordForm({...recordForm, price: parseInt(e.target.value) || 0})} />
                       </div>
                       <div className="space-y-6">
@@ -658,7 +694,7 @@ export default function AdminPage() {
                        <div className="space-y-6">
                           <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.6em] ml-8 italic font-black">Node</label>
                           <select className="w-full px-12 py-10 rounded-[50px] border-4 border-slate-50 focus:border-primary outline-none font-black text-xl bg-white appearance-none italic shadow-sm tracking-tighter" value={equipForm.branchId} onChange={e => setEquipForm({...equipForm, branchId: e.target.value})}>
-                             {branches.map(b => <option key={b.id} value={b.id}>{b.name.split("-")[1].trim().toUpperCase()}</option>)}
+                             {branches.map(b => <option key={b.id} value={b.id}>{b.name.includes("-") ? b.name.split("-")[1].trim().toUpperCase() : b.name.toUpperCase()}</option>)}
                           </select>
                        </div>
                        <div className="space-y-6">

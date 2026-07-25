@@ -57,22 +57,90 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncQueue, setSyncQueue] = useState<any[]>([]);
 
-  // Initialize data from localStorage
+  // Initialize data from localStorage and Backend API
   useEffect(() => {
-    const load = (key: string, def: any) => {
+    const loadFromLocal = (key: string, def: any) => {
       if (typeof window === 'undefined') return def;
       const val = localStorage.getItem(key);
       return val ? JSON.parse(val) : def;
     };
 
-    setRecords(load('grace_records', initialBodyParts));
-    setAppointments(load('grace_appointments', []));
-    setInvoices(load('grace_invoices', []));
-    setStaff(load('grace_staff', initialStaff));
-    setEquipment(load('grace_equipment', initialEquipment));
-    setAuditLogs(load('grace_audit_logs', []));
-    setPatients(load('grace_patients', initialPatients));
-    setSyncQueue(load('grace_sync_queue', []));
+    const loadFromApi = async () => {
+      setIsSyncing(true);
+      try {
+        const [aptRes, patRes, logRes, invRes, staffRes, equipRes] = await Promise.all([
+          fetch('/api/appointments'),
+          fetch('/api/patients'),
+          fetch('/api/logs'),
+          fetch('/api/invoices'),
+          fetch('/api/staff'),
+          fetch('/api/equipment')
+        ]);
+
+        if (aptRes.ok) {
+           const apts = await aptRes.json();
+           // Map API model to local context model
+           const mappedApts = apts.map((a: any) => ({
+             ...a,
+             date: new Date(a.date).toLocaleDateString(),
+             reportAttached: !!a.report
+           }));
+           setAppointments(mappedApts);
+        }
+
+        if (patRes.ok) {
+          const pats = await patRes.json();
+          setPatients(pats.map((p: any) => ({
+            ...p,
+            dob: new Date(p.dob).toISOString().split('T')[0]
+          })));
+        }
+
+        if (logRes.ok) {
+           const logs = await logRes.json();
+           setAuditLogs(logs.map((l: any) => ({
+             ...l,
+             timestamp: new Date(l.timestamp).toLocaleString()
+           })));
+        }
+
+        if (invRes.ok) {
+           const invs = await invRes.json();
+           setInvoices(invs.map((i: any) => ({
+             ...i,
+             date: new Date(i.date).toLocaleDateString()
+           })));
+        }
+
+        if (staffRes.ok) {
+           const members = await staffRes.json();
+           setStaff(members);
+        }
+
+        if (equipRes.ok) {
+           const items = await equipRes.json();
+           setEquipment(items.map((e: any) => ({
+             ...e,
+             lastMaintenance: new Date(e.lastMaintenance).toISOString().split('T')[0]
+           })));
+        }
+      } catch (err) {
+        console.error("Critical: API Sync Failure. Reverting to Local Cache.", err);
+        setAppointments(loadFromLocal('grace_appointments', []));
+        setPatients(loadFromLocal('grace_patients', initialPatients));
+        setAuditLogs(loadFromLocal('grace_audit_logs', []));
+      } finally {
+        setIsSyncing(false);
+      }
+    };
+
+    setRecords(loadFromLocal('grace_records', initialBodyParts));
+    setInvoices(loadFromLocal('grace_invoices', []));
+    setStaff(loadFromLocal('grace_staff', initialStaff));
+    setEquipment(loadFromLocal('grace_equipment', initialEquipment));
+    setSyncQueue(loadFromLocal('grace_sync_queue', []));
+
+    loadFromApi();
 
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
@@ -99,7 +167,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => { localStorage.setItem('grace_patients', JSON.stringify(patients)); }, [patients]);
   useEffect(() => { localStorage.setItem('grace_sync_queue', JSON.stringify(syncQueue)); }, [syncQueue]);
 
-  const logAction = (action: string, module: string) => {
+  const logAction = async (action: string, module: string) => {
     const newLog: AuditLog = {
       id: `log-${Date.now()}`,
       user: "System Admin",
@@ -108,6 +176,17 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       module
     };
     setAuditLogs(prev => [newLog, ...prev].slice(0, 50));
+
+    // Persist to API
+    try {
+      await fetch('/api/logs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, module, user: "System Admin" })
+      });
+    } catch (e) {
+       console.error("Log persistence failure.");
+    }
   };
 
   const addToQueue = (action: string, payload: any) => {
@@ -161,46 +240,94 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     logAction(`Diagnostic report attached to appointment ${id}`, "Clinical");
   };
 
-  const addInvoice = (inv: Invoice) => {
+  const addInvoice = async (inv: Invoice) => {
     setInvoices(p => [inv, ...p]);
-    logAction(`Invoice generated for ${inv.patientName}: $${inv.amount}`, "Billing");
+    logAction(`Invoice generated for ${inv.patientName}: GH₵${inv.amount}`, "Billing");
     addToQueue('ADD_INVOICE', inv);
+    try {
+      await fetch('/api/invoices', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(inv)
+      });
+    } catch (e) { console.error(e); }
   };
 
-  const payInvoice = (id: string) => {
+  const payInvoice = async (id: string) => {
     setInvoices(p => p.map(i => i.id === id ? { ...i, status: 'paid' } : i));
     logAction(`Payment received for invoice ${id}`, "Billing");
     addToQueue('PAY_INVOICE', { id });
+    try {
+      await fetch('/api/invoices', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status: 'paid' })
+      });
+    } catch (e) { console.error(e); }
   };
 
-  const addStaff = (member: Staff) => {
+  const addStaff = async (member: Staff) => {
     setStaff(p => [member, ...p]);
     logAction(`Registered new staff member: ${member.name}`, "Human Resources");
+    try {
+      await fetch('/api/staff', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(member)
+      });
+    } catch (e) { console.error(e); }
   };
 
-  const updateStaff = (member: Staff) => {
+  const updateStaff = async (member: Staff) => {
     setStaff(p => p.map(s => s.id === member.id ? member : s));
     logAction(`Updated staff profile: ${member.name}`, "Human Resources");
+    try {
+      await fetch('/api/staff', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(member)
+      });
+    } catch (e) { console.error(e); }
   };
 
-  const deleteStaff = (id: string) => {
+  const deleteStaff = async (id: string) => {
     setStaff(p => p.filter(s => s.id !== id));
     logAction(`Terminated staff session: ${id}`, "Human Resources");
+    try {
+      await fetch(`/api/staff?id=${id}`, { method: 'DELETE' });
+    } catch (e) { console.error(e); }
   };
 
-  const addEquipment = (item: Equipment) => {
+  const addEquipment = async (item: Equipment) => {
     setEquipment(p => [item, ...p]);
     logAction(`New asset registered: ${item.name}`, "Assets");
+    try {
+      await fetch('/api/equipment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(item)
+      });
+    } catch (e) { console.error(e); }
   };
 
-  const updateEquipment = (item: Equipment) => {
+  const updateEquipment = async (item: Equipment) => {
     setEquipment(p => p.map(e => e.id === item.id ? item : e));
     logAction(`Updated equipment status: ${item.name}`, "Assets");
+    try {
+      await fetch('/api/equipment', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(item)
+      });
+    } catch (e) { console.error(e); }
   };
 
-  const deleteEquipment = (id: string) => {
+  const deleteEquipment = async (id: string) => {
     setEquipment(p => p.filter(e => e.id !== id));
     logAction(`Decommissioned asset: ${id}`, "Assets");
+    try {
+      await fetch(`/api/equipment?id=${id}`, { method: 'DELETE' });
+    } catch (e) { console.error(e); }
   };
 
   const addPatient = (patient: Patient) => {
